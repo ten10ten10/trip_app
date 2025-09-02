@@ -1,0 +1,210 @@
+openapi: 3.0.0
+info:
+  title: Trip App API
+  version: 1.0.0
+servers:
+  - url: http://localhost:8080
+    description: Development server
+paths:
+  /signup:
+    post:
+      description: |
+        新規ユーザーを仮登録し、本人確認と初期パスワードを記載したメールを送信
+        この時点ではアカウントは有効化されない
+      operationId: createUser
+      tags:
+        - ユーザー認証
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NewUser'
+      responses:
+        '201':
+          description: |
+            仮登録に成功、本人確認メールを送信
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+
+  /users/verify/{verificationToken}:
+    post:
+      description: |
+        メールに記載されたリンクを踏むことで、ユーザー登録を完了（アカウントを有効化）
+      operationId: verifyUser
+      tags:
+        - ユーザー認証
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - verificationToken
+              properties:
+                verificationToken:
+                  type: string
+                  description: メールで送信された本人確認用トークン
+      responses:
+        '200':
+          description: ユーザー登録が完了
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Message'
+        '404':
+          description: 無効なトークン
+
+  /login:
+    post:
+      description: |
+        メールアドレスとメールで送られた初期パスワードを使ってログインし、認証トークン(JWT)を取得
+      operationId: loginUser
+      tags:
+        - ユーザー認証
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: ログイン成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '401':
+          description: メールアドレスまたはパスワードが不正
+
+  /logout:
+    post:
+      description: |
+        ログイン中のユーザーがログアウト
+      operationId: logoutUser
+      tags:
+        - ユーザー認証
+      security:
+        - BearerAuth: []
+      responses:
+        '204':
+          description: ログアウト成功
+
+  /me:
+    get:
+      description: userIdでユーザー情報取得
+      operationId: getMe
+      tags:
+        - ユーザー情報
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '404':
+          description: User not found
+
+  /me/password:
+    put:
+      description: |
+        ログイン中のユーザーが自身のパスワードを変更
+      operationId: changePassword
+      tags:
+        - ユーザー情報
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PasswordChangeRequest'
+      responses:
+        '204':
+          description: パスワードが正常に変更されました。
+        '400':
+          description: 現在のパスワードが間違っています。
+        '401':
+          description: 認証されていません。
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    AuthResponse:
+      type: object
+      properties:
+        user:
+          $ref: '#/components/schemas/User'
+        token:
+          type: string
+          description: Authentication token (JWT) for the new user.
+          example: 'eyJhbGciOiJIOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    NewUser:
+      type: object
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+    Message:
+      type: object
+      properties:
+        message:
+          type: string
+          example: 'Success'
+    LoginRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          description: メールで受け取った初期パスワード
+    PasswordChangeRequest:
+      type: object
+      required:
+        - currentPassword
+        - newPassword
+      properties:
+        currentPassword:
+          type: string
+          description: 現在のパスワード
+        newPassword:
+          type: string
+          description: 新しいパスワード
+          minLength: 8
+          example: 'newpassword123'
