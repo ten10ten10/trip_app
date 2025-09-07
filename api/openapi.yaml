@@ -134,6 +134,27 @@ paths:
           description: 現在のパスワードが間違っています。
         '401':
           description: 認証されていません。
+  /trips:
+    get:
+      description: |
+        ユーザーの旅行情報を取得
+      operationId: getUserTrips
+      tags:
+        - 旅行情報
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: 旅行情報の取得に成功
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Trip'
+        '404':
+          description: ユーザーの旅行情報が見つかりません
+  
 
 components:
   securitySchemes:
