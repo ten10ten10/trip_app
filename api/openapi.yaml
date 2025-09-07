@@ -232,6 +232,27 @@ paths:
         '404':
           description: 旅行情報が見つかりません
 
+  /trips/{tripId}/share:
+    post:
+      description: 特定の旅行情報に対する共有可能なリンク(トークン)を生成(再生成)します。
+      operationId: createShareLinkForTrip
+      tags:
+        - 共有機能 (要認証)
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/TripId'
+      responses:
+        '201':
+          description: 共有リンクの生成に成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShareLinkResponse'
+        '404':
+          description: 旅行情報が見つかりません
+            
+
 components:
   securitySchemes:
     BearerAuth:
