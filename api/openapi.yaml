@@ -148,7 +148,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Trip'
+              $ref: '#/components/schemas/NewTrip'
       responses:
         '201':
           description: 旅行情報の作成に成功
@@ -156,6 +156,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Trip'
+        '400':
+          description: 不正なリクエスト
     get:
       description: |
         ユーザーの旅行情報を取得
@@ -173,9 +175,32 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Trip'
+  /trips/{tripId}:
+    get:
+      description: |
+        特定の旅行情報を取得
+      operationId: getUserTrip
+      tags:
+        - 旅行情報
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: tripId
+          in: path
+          required: true
+          description: 旅行情報のID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: 旅行情報の取得に成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Trip'
         '404':
-          description: ユーザーの旅行情報が見つかりません
-  
+          description: 旅行情報が見つかりません
 
 components:
   securitySchemes:
