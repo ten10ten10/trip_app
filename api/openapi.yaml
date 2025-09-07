@@ -135,6 +135,27 @@ paths:
         '401':
           description: 認証されていません。
   /trips:
+    post:
+      description: |
+        ユーザーの旅行情報を新規作成
+      operationId: createUserTrip
+      tags:
+        - 旅行情報
+      security: 
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Trip'
+      responses:
+        '201':
+          description: 旅行情報の作成に成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Trip'
     get:
       description: |
         ユーザーの旅行情報を取得
