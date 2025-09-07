@@ -175,6 +175,7 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Trip'
+
   /trips/{tripId}:
     get:
       description: |
@@ -195,6 +196,35 @@ paths:
       responses:
         '200':
           description: 旅行情報の取得に成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Trip'
+        '404':
+          description: 旅行情報が見つかりません
+    put:
+      description: |
+        特定の旅行情報を更新
+      operationId: updateUserTrip
+      tags:
+        - 旅行情報
+      parameters:
+        - name: tripId
+          in: path
+          required: true
+          description: 旅行情報のID
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateTripRequest'
+      responses:
+        '200':
+          description: 旅行情報の更新に成功
           content:
             application/json:
               schema:
