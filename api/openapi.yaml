@@ -287,8 +287,28 @@ paths:
                 $ref: '#/components/schemas/Trip'
         '404':
           description: 旅行情報が見つかりません
-
-
+    post:
+      description: 共有トークンを使って、特定の旅行情報（タイトル、期間など）を更新します（認証不要）。
+      operationId: updatePublicTripByShareToken
+      tags:
+        - 共有機能 (認証不要)
+      parameters:
+        $ref: '#/components/parameters/shareToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PartialUpdateTripRequest'
+      responses:
+        '200':
+          description: 更新に成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Trip'
+        '404':
+          description: 共有情報が見つかりません
 
 components:
   securitySchemes:
