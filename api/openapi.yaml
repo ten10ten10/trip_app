@@ -231,6 +231,23 @@ paths:
                 $ref: '#/components/schemas/Trip'
         '404':
           description: 旅行情報が見つかりません
+    delete:
+      description: |
+        特定の旅行情報を削除
+      operationId: deleteUserTrip
+      parameters:
+        - name: tripId
+          in: path
+          required: true
+          description: 旅行情報のID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: 旅行情報が正常に削除されました。
+        '404':
+          description: 旅行情報が見つかりません
 
   /trips/{tripId}/share:
     post:
