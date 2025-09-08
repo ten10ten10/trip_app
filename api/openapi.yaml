@@ -186,13 +186,7 @@ paths:
       security:
         - BearerAuth: []
       parameters:
-        - name: tripId
-          in: path
-          required: true
-          description: 旅行情報のID
-          schema:
-            type: string
-            format: uuid
+        - $ref: '#/components/parameters/TripId'
       responses:
         '200':
           description: 旅行情報の取得に成功
@@ -209,13 +203,7 @@ paths:
       tags:
         - 旅行情報
       parameters:
-        - name: tripId
-          in: path
-          required: true
-          description: 旅行情報のID
-          schema:
-            type: string
-            format: uuid
+        - $ref: '#/components/parameters/TripId'
       requestBody:
         required: true
         content:
@@ -236,13 +224,7 @@ paths:
         特定の旅行情報を削除
       operationId: deleteUserTrip
       parameters:
-        - name: tripId
-          in: path
-          required: true
-          description: 旅行情報のID
-          schema:
-            type: string
-            format: uuid
+        - $ref: '#/components/parameters/TripId'
       responses:
         '204':
           description: 旅行情報が正常に削除されました。
