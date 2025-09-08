@@ -251,7 +251,24 @@ paths:
                 $ref: '#/components/schemas/ShareLinkResponse'
         '404':
           description: 旅行情報が見つかりません
-            
+    get: 
+      description: 特定の旅行情報に対する共有可能なリンク(トークン)を取得します。
+      operationId: getShareLinkForTrip
+      tags:
+        - 共有機能 (要認証)
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/TripId'
+      responses:
+        '200':
+          description: 共有リンクの取得に成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShareLinkResponse'
+        '404':
+          description: 旅行情報が見つかりません
 
 components:
   securitySchemes:
