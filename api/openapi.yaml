@@ -148,7 +148,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/NewTrip'
+              $ref: '#/components/schemas/NewTripRequest'
       responses:
         '201':
           description: 旅行情報の作成に成功
@@ -292,7 +292,7 @@ paths:
       tags:
         - 共有機能 (認証不要)
       parameters:
-        $ref: '#/components/parameters/shareToken'
+        - $ref: '#/components/parameters/shareToken'
       requestBody:
         required: true
         content:
@@ -382,3 +382,84 @@ components:
           description: 新しいパスワード
           minLength: 8
           example: 'newpassword123'
+    Trip:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        startDate:
+          type: string
+          format: date
+        endDate:
+          type: string
+          format: date
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      
+    TripBody:
+      type: object
+      required:
+        - title
+        - startDate
+        - endDate
+      properties:
+        title:
+          type: string
+        startDate:
+          type: string
+          format: date
+        endDate:
+          type: string
+          format: date
+
+    NewTripRequest:
+      $ref: '#/components/schemas/TripBody'
+
+    UpdateTripRequest:
+      $ref: '#/components/schemas/TripBody'
+      
+    PartialUpdateTripRequest:
+      type: object
+      properties:
+        title:
+          type: string
+        startDate:
+          type: string
+          format: date
+        endDate:
+          type: string
+          format: date
+          
+    ShareLinkResponse:
+      type: object
+      properties:
+        shareToken:
+          type: string
+          description: 生成された共有用トークン
+        shareUrl:
+          type: string
+          format: uri
+          description: ユーザーが共有する完全なURL
+  parameters:
+    TripId:
+      name: tripId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: 旅行情報の一意な識別子
+    shareToken:
+      name: shareToken
+      in: path
+      required: true
+      schema:
+        type: string
+      description: 共有用の一意なトークン
