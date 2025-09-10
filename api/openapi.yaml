@@ -230,6 +230,33 @@ paths:
           description: 旅行情報が正常に削除されました。
         '404':
           description: 旅行情報が見つかりません
+  /trips/{tripId}/schedules:
+    post:
+      description: 特定の旅行情報に対してスケジュールを追加します。
+      operationId: addScheduleToTrip
+      tags:
+        - スケジュール管理 (要認証)
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/TripId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NewSchedule'
+      responses:
+        '201':
+          description: スケジュールの追加に成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Schedule'
+        '400':
+          description: 不正なリクエスト
+        '404':
+          description: 旅行情報が見つかりません
 
   /trips/{tripId}/share:
     post:
@@ -436,7 +463,58 @@ components:
         endDate:
           type: string
           format: date
-          
+    
+    Schedule:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        date:
+          type: string
+          format: date
+        startTime:
+          type: string
+          pattern: '^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$'
+          example: '09:00'
+        endTime:
+          type: string
+          pattern: '^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$'
+          example: '12:00'
+        memo:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    NewSchedule:
+      type: object
+      required:
+        - title
+        - date
+      properties:
+        title:
+          type: string
+        date:
+          type: string
+          format: date
+        startTime:
+          type: string
+          pattern: '^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$'
+          example: '09:00'
+        endTime:
+          type: string
+          pattern: '^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$'
+          example: '12:00'
+        memo:
+          type: string
+          nullable: true
+
     ShareLinkResponse:
       type: object
       properties:
