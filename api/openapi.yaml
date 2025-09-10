@@ -258,6 +258,27 @@ paths:
         '404':
           description: 旅行情報が見つかりません
 
+  /trips/{tripId}/schedules/{scheduleId}:
+    get:
+      description: 特定のスケジュールを取得します。
+      operationId: getScheduleForTrip
+      tags:
+        - スケジュール管理 (要認証)
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/TripId'
+        - $ref: '#/components/parameters/ScheduleId'
+      responses:
+        '200':
+          description: スケジュールの取得に成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Schedule'
+        '404':
+          description: 指定された旅行、またはスケジュールが見つかりません。
+
   /trips/{tripId}/share:
     post:
       description: 特定の旅行情報に対する共有可能なリンク(トークン)を生成(再生成)します。
@@ -541,3 +562,11 @@ components:
       schema:
         type: string
       description: 共有用の一意なトークン
+    ScheduleId:
+      name: scheduleId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: スケジュールの一意な識別子
