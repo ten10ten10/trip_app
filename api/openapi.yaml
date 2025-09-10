@@ -278,6 +278,31 @@ paths:
                 $ref: '#/components/schemas/Schedule'
         '404':
           description: 指定された旅行、またはスケジュールが見つかりません。
+    put:
+      description: 特定のスケジュールを更新します。
+      operationId: updateScheduleForTrip
+      tags:
+        - スケジュール管理 (要認証)
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/TripId'
+        - $ref: '#/components/parameters/ScheduleId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateSchedule'
+      responses:
+        '200':
+          description: スケジュールの更新に成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Schedule'
+        '404':
+          description: 指定された旅行、またはスケジュールが見つかりません。
 
   /trips/{tripId}/share:
     post:
@@ -450,28 +475,12 @@ components:
         updatedAt:
           type: string
           format: date-time
-      
-    TripBody:
-      type: object
-      required:
-        - title
-        - startDate
-        - endDate
-      properties:
-        title:
-          type: string
-        startDate:
-          type: string
-          format: date
-        endDate:
-          type: string
-          format: date
 
     NewTripRequest:
-      $ref: '#/components/schemas/TripBody'
+      $ref: '#/components/schemas/Trip'
 
     UpdateTripRequest:
-      $ref: '#/components/schemas/TripBody'
+      $ref: '#/components/schemas/Trip'
       
     PartialUpdateTripRequest:
       type: object
@@ -535,6 +544,8 @@ components:
         memo:
           type: string
           nullable: true
+    UpdateSchedule:
+      $ref: '#/components/schemas/NewSchedule'
 
     ShareLinkResponse:
       type: object
