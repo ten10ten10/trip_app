@@ -290,7 +290,7 @@ paths:
       description: 共有トークンを使って、特定の旅行情報（タイトル、期間など）を更新します（認証不要）。
       operationId: updatePublicTripByShareToken
       tags:
-        - 共有機能 (認証不要)
+        - 共有機能(認証不要)
       parameters:
         - $ref: '#/components/parameters/shareToken'
       requestBody:
