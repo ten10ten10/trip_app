@@ -257,6 +257,26 @@ paths:
           description: 不正なリクエスト
         '404':
           description: 旅行情報が見つかりません
+    get:
+      description: 特定の旅行情報に関連するすべてのスケジュールを取得します。
+      operationId: getSchedulesForTrip
+      tags:
+        - スケジュール管理 (要認証)
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/TripId'
+      responses:
+        '200':
+          description: スケジュールの取得に成功
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Schedule'
+        '404':
+          description: 指定された旅行、またはスケジュールが見つかりません。
 
   /trips/{tripId}/schedules/{scheduleId}:
     get:
