@@ -367,7 +367,7 @@ paths:
       description: 共有トークンを使って、特定の旅行情報を取得します
       operationId: getPublicTripByShareToken
       tags: 
-        - 共有機能(認証不要)
+        - 旅行情報(認証不要)
       parameters: 
         - $ref: '#/components/parameters/shareToken'
       responses:
@@ -383,7 +383,7 @@ paths:
       description: 共有トークンを使って、特定の旅行情報（タイトル、期間など）を更新します（認証不要）。
       operationId: updatePublicTripByShareToken
       tags:
-        - 共有機能(認証不要)
+        - 旅行情報(認証不要)
       parameters:
         - $ref: '#/components/parameters/shareToken'
       requestBody:
@@ -449,7 +449,28 @@ paths:
 
   /public/trips/{shareToken}/schedules/{scheduleId}:
     get:
+      description: 特定のスケジュールを取得します。
+      operationId: getScheduleForPublicTrip
+      tags:
+        - スケジュール管理 (認証不要)
+      parameters:
+        - $ref: '#/components/parameters/shareToken'
+        - $ref: '#/components/parameters/ScheduleId'
+      responses:
+        '200':
+          description: スケジュールの取得に成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Schedule'
+        '404':
+          description: 指定された旅行、またはスケジュールが見つかりません。
     put:
+      ************
+      [要検討]
+      PATCHにするか
+      requestbodyを共通にするか
+      ************
 
 components:
   securitySchemes:
