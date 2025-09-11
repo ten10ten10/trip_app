@@ -401,6 +401,55 @@ paths:
                 $ref: '#/components/schemas/Trip'
         '404':
           description: 共有情報が見つかりません
+  
+  /public/trips/{shareToken}/schedules:
+    post:
+      description: 特定の旅行情報に対してスケジュールを追加します。
+      operationId: addScheduleToPublicTrip
+      tags:
+        - スケジュール管理 (認証不要)
+      parameters:
+        - $ref: '#/components/parameters/shareToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PartialNewSchedule'
+      responses:
+        '201':
+          description: スケジュールの追加に成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Schedule'
+        '400':
+          description: 不正なリクエスト
+        '404':
+          description: 旅行情報が見つかりません
+
+    get:
+      description: 特定の旅行情報に関連するすべてのスケジュールを取得します。
+      operationId: getSchedulesForPublicTrip
+      tags:
+        - スケジュール管理 (認証不要)
+      parameters:
+        - $ref: '#/components/parameters/shareToken'
+      responses:
+        '200':
+          description: スケジュールの取得に成功
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Schedule'
+        '404':
+          description: 指定された旅行、またはスケジュールが見つかりません。
+
+  /public/trips/{shareToken}/schedules/{scheduleId}:
+    get:
+    put:
 
 components:
   securitySchemes:
