@@ -36,18 +36,13 @@ paths:
       operationId: verifyUser
       tags:
         - ユーザー認証
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required:
-                - verificationToken
-              properties:
-                verificationToken:
-                  type: string
-                  description: メールで送信された本人確認用トークン
+      parameters:
+        - name: verificationToken
+          in: path
+          required: true
+          schema:
+            type: string
+          description: メールで送信された本人確認用トークン
       responses:
         '200':
           description: ユーザー登録が完了
@@ -298,7 +293,7 @@ paths:
                 $ref: '#/components/schemas/Schedule'
         '404':
           description: 指定された旅行、またはスケジュールが見つかりません。
-    put:
+    patch:
       description: 特定のスケジュールを更新します。
       operationId: updateScheduleForTrip
       tags:
@@ -379,7 +374,7 @@ paths:
                 $ref: '#/components/schemas/Trip'
         '404':
           description: 旅行情報が見つかりません
-    post:
+    put:
       description: 共有トークンを使って、特定の旅行情報（タイトル、期間など）を更新します（認証不要）。
       operationId: updatePublicTripByShareToken
       tags:
@@ -391,7 +386,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PartialUpdateTripRequest'
+              $ref: '#/components/schemas/UpdateTripRequest'
       responses:
         '200':
           description: 更新に成功
@@ -415,7 +410,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PartialNewSchedule'
+              $ref: '#/components/schemas/NewSchedule'
       responses:
         '201':
           description: スケジュールの追加に成功
@@ -465,12 +460,29 @@ paths:
                 $ref: '#/components/schemas/Schedule'
         '404':
           description: 指定された旅行、またはスケジュールが見つかりません。
-    put:
-      ************
-      [要検討]
-      PATCHにするか
-      requestbodyを共通にするか
-      ************
+    patch:
+      description: 特定のスケジュールを部分的に更新します。
+      operationId: updateScheduleForPublicTrip
+      tags:
+        - スケジュール管理 (認証不要)
+      parameters:
+        - $ref: '#/components/parameters/shareToken'
+        - $ref: '#/components/parameters/ScheduleId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateSchedule'
+      responses:
+        '200':
+          description: スケジュールの更新に成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Schedule'
+        '404':
+          description: 指定された旅行、またはスケジュールが見つかりません。
 
 components:
   securitySchemes:
@@ -567,13 +579,11 @@ components:
           format: date-time
 
     NewTripRequest:
-      $ref: '#/components/schemas/Trip'
-
-    UpdateTripRequest:
-      $ref: '#/components/schemas/Trip'
-      
-    PartialUpdateTripRequest:
       type: object
+      required:
+        - title
+        - startDate
+        - endDate
       properties:
         title:
           type: string
@@ -583,6 +593,9 @@ components:
         endDate:
           type: string
           format: date
+
+    UpdateTripRequest:
+      $ref: '#/components/schemas/NewTripRequest'
     
     Schedule:
       type: object
@@ -613,10 +626,12 @@ components:
           type: string
           format: date-time
     NewSchedule:
-      type: object
       required:
         - title
         - date
+      $ref: '#/components/schemas/UpdateSchedule'
+    UpdateSchedule:
+      type: object
       properties:
         title:
           type: string
@@ -634,8 +649,6 @@ components:
         memo:
           type: string
           nullable: true
-    UpdateSchedule:
-      $ref: '#/components/schemas/NewSchedule'
 
     Member:
       type: object
@@ -653,6 +666,7 @@ components:
           type: string
           format: uri
           description: ユーザーが共有する完全なURL
+          
   parameters:
     TripId:
       name: tripId
