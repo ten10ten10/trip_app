@@ -637,6 +637,12 @@ components:
     UpdateSchedule:
       $ref: '#/components/schemas/NewSchedule'
 
+    Member:
+      type: object
+      properties:
+        name:
+          type: string
+
     ShareLinkResponse:
       type: object
       properties:
