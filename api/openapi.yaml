@@ -318,6 +318,21 @@ paths:
                 $ref: '#/components/schemas/Schedule'
         '404':
           $ref: '#/components/responses/NotFound'
+    delete:
+      description: 特定のスケジュールを削除します。
+      operationId: deleteScheduleForTrip
+      tags:
+        - スケジュール管理 (要認証)
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/TripId'
+        - $ref: '#/components/parameters/ScheduleId'
+      responses:
+        '204':
+          description: スケジュールの削除に成功
+        '404':
+          $ref: '#/components/responses/NotFound'
 
   /trips/{tripId}/share:
     post:
@@ -481,6 +496,19 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Schedule'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      description: 特定のスケジュールを削除します。
+      operationId: deleteScheduleForPublicTrip
+      tags:
+        - スケジュール管理 (認証不要)
+      parameters:
+        - $ref: '#/components/parameters/shareToken'
+        - $ref: '#/components/parameters/ScheduleId'
+      responses:
+        '204':
+          description: スケジュールの削除に成功
         '404':
           $ref: '#/components/responses/NotFound'
 
