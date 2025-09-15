@@ -1,0 +1,20 @@
+# docker-compose.yml
+
+version: '3.8'
+
+services:
+  db:
+    image: postgres:16-alpine # 軽量なAlpine LinuxベースのPostgreSQL 16を使用
+    container_name: trip-app-db
+    restart: always
+    ports:
+      - "15432:5432" # PCの15432ポートをコンテナの5432ポートに接続
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER} # ユーザー名を指定
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD} # パスワードを指定
+      - POSTGRES_DB=${POSTGRES_DB} # 作成するデータベース名を指定
+    volumes:
+      - trip_app_data:/var/lib/postgresql/data # DBデータを永続化するための設定
+
+volumes:
+  trip_app_data:
