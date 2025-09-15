@@ -668,17 +668,12 @@ components:
           format: uuid
         title:
           type: string
-        date:
+        startDateTime:
           type: string
-          format: date
-        startTime:
+          format: date-time
+        endDateTime:
           type: string
-          pattern: '^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$'
-          example: '09:00'
-        endTime:
-          type: string
-          pattern: '^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$'
-          example: '12:00'
+          format: date-time
         memo:
           type: string
           nullable: true
@@ -691,24 +686,20 @@ components:
     NewSchedule:
       required:
         - title
-        - date
+        - startDateTime
+        - endDateTime
       $ref: '#/components/schemas/UpdateSchedule'
     UpdateSchedule:
       type: object
       properties:
         title:
           type: string
-        date:
+        startDateTime:
           type: string
-          format: date
-        startTime:
+          format: date-time
+        endDateTime:
           type: string
-          pattern: '^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$'
-          example: '09:00'
-        endTime:
-          type: string
-          pattern: '^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$'
-          example: '12:00'
+          format: date-time
         memo:
           type: string
           nullable: true
