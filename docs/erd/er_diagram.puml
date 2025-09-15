@@ -1,0 +1,81 @@
+@startuml
+
+object User {
+  <#white>| <b>Data Type</b> | <b>Column Name</b> | <b>Constraints</b> | <b>Nullability</b> |
+  <#white>| BINARY(16) | id | PK | NOT NULL |
+  <#white>| varchar(255) | name | | NOT NULL |
+  <#white>| varchar(255) | email | UQ | NOT NULL |
+  <#white>| varchar(255) | password_hash | | NOT NULL |
+  <#white>| boolean | is_active | | NOT NULL |
+  <#white>| varchar(255) | verification_token_hash | UQ | |
+  <#white>| DATETIME(6) | createdAt | | NOT NULL |
+  <#white>| DATETIME(6) | updatedAt | | NOT NULL |
+}
+note right of User
+  <b>ID生成方針:</b>
+    - UUIDv7（時間順ソート可能）推奨
+  <b>パスワード:</b>
+    - Argon2等OWASP準拠ソルト付きハッシュ
+  <b>トークン運用:</b>
+    - CSPRNGで生成、有効期限を設けてハッシュ保存
+    - 有効期限(expires_at)列追加を推奨
+end note
+
+object Trip {
+  <#white>| <b>Data Type</b> | <b>Column Name</b> | <b>Constraints</b> | <b>Nullability</b> |
+  <#white>| BINARY(16) | id | PK | NOT NULL |
+  <#white>| BINARY(16) | userId | FK | NOT NULL |
+  <#white>| varchar(255) | title | | NOT NULL |
+  <#white>| date | startDate | | NOT NULL |
+  <#white>| date | endDate | | NOT NULL |
+  <#white>| DATETIME(6) | createdAt | | NOT NULL |
+  <#white>| DATETIME(6) | updatedAt | | NOT NULL |
+}
+note right of Trip
+  <b>CHECK制約:</b>
+    - endDate >= startDate をDBで設定
+end note
+
+object Schedule {
+  <#white>| <b>Data Type</b> | <b>Column Name</b> | <b>Constraints</b> | <b>Nullability</b> |
+  <#white>| BINARY(16) | id | PK | NOT NULL |
+  <#white>| BINARY(16) | tripId | FK | NOT NULL |
+  <#white>| varchar(255) | title | | NOT NULL |
+  <#white>| datetime | startDateTime | | |
+  <#white>| datetime | endDateTime | | |
+  <#white>| text | memo | | |
+  <#white>| DATETIME(6) | createdAt | | NOT NULL |
+  <#white>| DATETIME(6) | updatedAt | | NOT NULL |
+}
+note bottom of Schedule
+  <b>CHECK制約:</b>
+    - startDateTime < endDateTime (NULLは許容)
+  <b>アプリ制約:</b>
+    - 親Tripの期間内に限る（他テーブル参照制約はアプリロジックで担保）
+end note
+
+object Member {
+  <#white>| <b>Data Type</b> | <b>Column Name</b> | <b>Constraints</b> | <b>Nullability</b> |
+  <#white>| BINARY(16) | id | PK | NOT NULL |
+  <#white>| BINARY(16) | tripId | FK | NOT NULL |
+  <#white>| varchar(255) | name | | NOT NULL |
+}
+
+object ShareToken {
+  <#white>| <b>Data Type</b> | <b>Column Name</b> | <b>Constraints</b> | <b>Nullability</b> |
+  <#white>| varchar(255) | token_hash | PK | NOT NULL |
+  <#white>| BINARY(16) | tripId | FK, UQ | NOT NULL |
+  <#white>| DATETIME(6) | expires_at | | NOT NULL |
+}
+note bottom of ShareToken
+  <b>共有用トークン:</b>
+    - CSPRNG生成、ハッシュ保存、有効期限必須
+    - 利用済み管理(used_at)追加も可
+end note
+
+User }o--|| Trip
+Trip }o--|| Schedule
+Trip }o--|| Member
+Trip ||--|| ShareToken
+
+@enduml
