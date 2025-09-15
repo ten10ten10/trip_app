@@ -41,8 +41,8 @@ object Schedule {
   <#white>| BINARY(16) | id | PK | NOT NULL |
   <#white>| BINARY(16) | tripId | FK | NOT NULL |
   <#white>| varchar(255) | title | | NOT NULL |
-  <#white>| datetime | startDateTime | | |
-  <#white>| datetime | endDateTime | | |
+  <#white>| datetime | startDateTime | | NOT NULL |
+  <#white>| datetime | endDateTime | | NOT NULL |
   <#white>| text | memo | | |
   <#white>| DATETIME(6) | createdAt | | NOT NULL |
   <#white>| DATETIME(6) | updatedAt | | NOT NULL |
