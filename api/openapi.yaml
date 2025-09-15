@@ -723,6 +723,12 @@ components:
           type: string
           format: uri
           description: ユーザーが共有する完全なURL
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
           
   parameters:
     TripId:
