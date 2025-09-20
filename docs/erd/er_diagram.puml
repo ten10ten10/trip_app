@@ -1,78 +1,74 @@
 @startuml
 
+' ========== Entities ==========
 object User {
-  <#white>| <b>Data Type</b> | <b>Column Name</b> | <b>Constraints</b> | <b>Nullability</b> |
-  <#white>| uuid | id | PK | NOT NULL |
-  <#white>| varchar(255) | name | | NOT NULL |
-  <#white>| varchar(255) | email | UQ | NOT NULL |
-  <#white>| varchar(255) | password_hash | | NOT NULL |
-  <#white>| boolean | is_active | | NOT NULL |
-  <#white>| varchar(255) | verification_token_hash | UQ | |
-  <#white>| timestamptz | createdAt | DEFAULT now() | NOT NULL |
-  <#white>| timestamptz | updatedAt | DEFAULT now() | NOT NULL |
+<#white>| <b>Data Type</b> | <b>Column Name</b> | <b>Constraints</b> | <b>Nullability</b> |
+<#white>| uuid | id | PK, DEFAULT uuid_generate_v7() | NOT NULL |
+<#white>| varchar(255) | name | | NOT NULL |
+<#white>| varchar(255) | email | UQ | NOT NULL |
+<#white>| varchar(255) | password_hash | | NOT NULL |
+<#white>| boolean | is_active | DEFAULT false | NOT NULL |
+<#white>| varchar(255) | verification_token_hash | UQ | |
+<#white>| timestamptz | verification_token_expires_at | | |
+<#white>| timestamptz | createdAt | DEFAULT now() | NOT NULL |
+<#white>| timestamptz | updatedAt | DEFAULT now() | NOT NULL |
 }
 note right of User
-  <b>ID生成方針:</b>
-    - UUIDv7などの時間順UUID + uuid型を推奨
-  <b>パスワード:</b>
-    - Argon2等OWASP準拠ソルト付きハッシュ
-  <b>検証トークン:</b>
-    - 期限付きでの発行・ハッシュ保存（必要に応じてexpires列を別途設計）
+ID: UUIDv7の既定値生成（uuid_generate_v7()、pg_uuidv7拡張）を使用
+検証トークン: ハッシュに加え有効期限カラム(verification_token_expires_at)を保持
+参考: UNIQUE/NOT NULL/DEFAULT はDDLの制約として実装
 end note
 
 object Trip {
-  <#white>| <b>Data Type</b> | <b>Column Name</b> | <b>Constraints</b> | <b>Nullability</b> |
-  <#white>| uuid | id | PK | NOT NULL |
-  <#white>| uuid | userId | FK (ON DELETE CASCADE) | NOT NULL |
-  <#white>| varchar(255) | title | | NOT NULL |
-  <#white>| date | startDate | | NOT NULL |
-  <#white>| date | endDate | | NOT NULL |
-  <#white>| timestamptz | createdAt | DEFAULT now() | NOT NULL |
-  <#white>| timestamptz | updatedAt | DEFAULT now() | NOT NULL |
+<#white>| <b>Data Type</b> | <b>Column Name</b> | <b>Constraints</b> | <b>Nullability</b> |
+<#white>| uuid | id | PK, DEFAULT uuid_generate_v7() | NOT NULL |
+<#white>| uuid | userId | FK->User(id) ON DELETE CASCADE | NOT NULL |
+<#white>| varchar(255) | title | | NOT NULL |
+<#white>| date | startDate | | NOT NULL |
+<#white>| date | endDate | CHECK endDate >= startDate | NOT NULL |
+<#white>| timestamptz | createdAt | DEFAULT now() | NOT NULL |
+<#white>| timestamptz | updatedAt | DEFAULT now() | NOT NULL |
 }
 note right of Trip
-  <b>CHECK制約:</b>
-    - endDate >= startDate をDBで設定
+CHECK制約: endDate >= startDate
 end note
 
 object Schedule {
-  <#white>| <b>Data Type</b> | <b>Column Name</b> | <b>Constraints</b> | <b>Nullability</b> |
-  <#white>| uuid | id | PK | NOT NULL |
-  <#white>| uuid | tripId | FK (ON DELETE CASCADE) | NOT NULL |
-  <#white>| varchar(255) | title | | NOT NULL |
-  <#white>| timestamptz | startDateTime | | NOT NULL |
-  <#white>| timestamptz | endDateTime | | NOT NULL |
-  <#white>| text | memo | | |
-  <#white>| timestamptz | createdAt | DEFAULT now() | NOT NULL |
-  <#white>| timestamptz | updatedAt | DEFAULT now() | NOT NULL |
+<#white>| <b>Data Type</b> | <b>Column Name</b> | <b>Constraints</b> | <b>Nullability</b> |
+<#white>| uuid | id | PK, DEFAULT uuid_generate_v7() | NOT NULL |
+<#white>| uuid | tripId | FK->Trip(id) ON DELETE CASCADE | NOT NULL |
+<#white>| varchar(255) | title | | NOT NULL |
+<#white>| timestamptz | startDateTime | | NOT NULL |
+<#white>| timestamptz | endDateTime | CHECK endDateTime > startDateTime | NOT NULL |
+<#white>| text | memo | | |
+<#white>| timestamptz | createdAt | DEFAULT now() | NOT NULL |
+<#white>| timestamptz | updatedAt | DEFAULT now() | NOT NULL |
 }
 note bottom of Schedule
-  <b>CHECK制約:</b>
-    - startDateTime < endDateTime
-  <b>アプリ制約:</b>
-    - 親Tripの期間内に限る（他テーブル参照範囲はアプリで担保）
+CHECK制約: endDateTime > startDateTime（厳密不等号）
+期間のTrip内包含はアプリ側で担保
 end note
 
 object Member {
-  <#white>| <b>Data Type</b> | <b>Column Name</b> | <b>Constraints</b> | <b>Nullability</b> |
-  <#white>| uuid | id | PK | NOT NULL |
-  <#white>| uuid | tripId | FK (ON DELETE CASCADE) | NOT NULL |
-  <#white>| varchar(255) | name | | NOT NULL |
+<#white>| <b>Data Type</b> | <b>Column Name</b> | <b>Constraints</b> | <b>Nullability</b> |
+<#white>| uuid | id | PK, DEFAULT uuid_generate_v7() | NOT NULL |
+<#white>| uuid | tripId | FK->Trip(id) ON DELETE CASCADE | NOT NULL |
+<#white>| varchar(255) | name | | NOT NULL |
 }
 
 object ShareToken {
-  <#white>| <b>Data Type</b> | <b>Column Name</b> | <b>Constraints</b> | <b>Nullability</b> |
-  <#white>| uuid | tripId | FK (ON DELETE CASCADE), PK | NOT NULL |
-  <#white>| varchar(255) | token_hash | UQ | NOT NULL |
-  <#white>| timestamptz | createdAt | DEFAULT now() | NOT NULL |
-  <#white>| timestamptz | updatedAt | DEFAULT now() | NOT NULL |
+<#white>| <b>Data Type</b> | <b>Column Name</b> | <b>Constraints</b> | <b>Nullability</b> |
+<#white>| uuid | tripId | PK, FK->Trip(id) ON DELETE CASCADE | NOT NULL |
+<#white>| varchar(255) | token_hash | UQ | NOT NULL |
+<#white>| timestamptz | createdAt | DEFAULT now() | NOT NULL |
+<#white>| timestamptz | updatedAt | DEFAULT now() | NOT NULL |
 }
 note bottom of ShareToken
-  <b>共有用トークン:</b>
-    - 有効期限なし運用（ローテーション + 監査updatedAt）
-    - token_hashは衝突防止のためUNIQUE
+共有トークン: 一意なtoken_hash、Tripと1対1（Trip側に対し0..1）
 end note
 
+' ========== Relationships (cardinality) ==========
+' Aggregation style + cardinalities per PlantUML
 User }o--|| Trip
 Trip }o--|| Schedule
 Trip }o--|| Member
