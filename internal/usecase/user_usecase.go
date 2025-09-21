@@ -7,8 +7,10 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/o_ten/trip_app/internal/domain"
+	"github.com/o_ten/trip_app/internal/infrastructure/email"
 	"github.com/o_ten/trip_app/internal/repository"
-	"golang.org/x/crypto/bcrypt"
+	"github.com/o_ten/trip_app/internal/security"
+	"github.com/o_ten/trip_app/internal/validator"
 	"gorm.io/gorm"
 )
 
@@ -24,12 +26,13 @@ type UserUsecase interface {
 type userUsecase struct {
 	ur repository.UserRepository
 	uv validator.UserValidator
-	us security.TokenService
+	up security.PasswordGenerator
+	us security.TokenGenerator
 	ue email.Sender
 }
 
-func NewUserUsecase(ur repository.UserRepository, uv validator.UserValidator, us security.TokenService, ue email.Sender) UserUsecase {
-	return &userUsecase{ur, uv, us, ue}
+func NewUserUsecase(ur repository.UserRepository, uv validator.UserValidator, up security.PasswordGenerator, us security.TokenGenerator, ue email.Sender) UserUsecase {
+	return &userUsecase{ur, uv, up, us, ue}
 }
 
 func (uu *userUsecase) SignUp(ctx context.Context, name, email string) (*domain.User, error) {
@@ -50,18 +53,13 @@ func (uu *userUsecase) SignUp(ctx context.Context, name, email string) (*domain.
 	}
 
 	// initPassword & hashPassword
-	initPassword := generateInitialPassword()
-	passwordHash, err := bcrypt.GenerateFromPassword([]byte(initPassword), bcrypt.DefaultCost)
+	rawPassword, hashPassword, err := uu.up.GeneratePassword()
 	if err != nil {
 		return nil, err
 	}
 
 	// generate verification token
-	Token, err := generateVerificationToken()
-	if err != nil {
-		return nil, err
-	}
-	tokenHash, err := hashToken(Token)
+	rawToken, hashToken, err := uu.us.GenerateToken()
 	if err != nil {
 		return nil, err
 	}
@@ -72,9 +70,9 @@ func (uu *userUsecase) SignUp(ctx context.Context, name, email string) (*domain.
 		ID:                         uuid.New(),
 		Name:                       name,
 		Email:                      email,
-		PasswordHash:               string(passwordHash),
+		PasswordHash:               string(hashPassword),
 		IsActive:                   false,
-		VerificationTokenHash:      string(tokenHash),
+		VerificationTokenHash:      &hashToken,
 		VerificationTokenExpiresAt: &expiresAt,
 		CreatedAt:                  time.Now(),
 		UpdatedAt:                  time.Now(),
@@ -84,7 +82,7 @@ func (uu *userUsecase) SignUp(ctx context.Context, name, email string) (*domain.
 	}
 
 	// send verification email
-	if err := sendVerificationEmail(user.Email, initPassword, Token); err != nil {
+	if err := uu.ue.SendVerificationEmail(ctx, user.Email, rawToken, rawPassword); err != nil {
 		return nil, err
 	}
 
