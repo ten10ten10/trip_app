@@ -24,10 +24,12 @@ type UserUsecase interface {
 type userUsecase struct {
 	ur repository.UserRepository
 	uv validator.UserValidator
+	us security.TokenService
+	ue email.Sender
 }
 
-func NewUserUsecase(ur repository.UserRepository, uv validator.UserValidator) UserUsecase {
-	return &userUsecase{ur, uv}
+func NewUserUsecase(ur repository.UserRepository, uv validator.UserValidator, us security.TokenService, ue email.Sender) UserUsecase {
+	return &userUsecase{ur, uv, us, ue}
 }
 
 func (uu *userUsecase) SignUp(ctx context.Context, name, email string) (*domain.User, error) {
