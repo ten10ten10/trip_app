@@ -7,6 +7,7 @@ toolchain go1.24.7
 require (
 	github.com/go-playground/validator/v10 v10.14.1
 	github.com/google/uuid v1.6.0
+	github.com/labstack/echo v3.3.10+incompatible
 	github.com/labstack/echo/v4 v4.13.4
 	github.com/oapi-codegen/runtime v1.1.2
 	golang.org/x/crypto v0.38.0
