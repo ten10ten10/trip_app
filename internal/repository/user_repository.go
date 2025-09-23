@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/google/uuid"
-	"github.com/o_ten/trip_app/internal/domain"
+	"trip_app/internal/domain"
 	"gorm.io/gorm"
 )
 

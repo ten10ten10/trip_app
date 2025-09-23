@@ -5,8 +5,8 @@ import (
 	"net/http"
 
 	"github.com/labstack/echo"
-	"github.com/o_ten/trip_app/api"
-	"github.com/o_ten/trip_app/internal/usecase"
+	"trip_app/api"
+	"trip_app/internal/usecase"
 	openapi_types "github.com/oapi-codegen/runtime/types"
 )
 

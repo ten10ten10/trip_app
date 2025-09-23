@@ -6,11 +6,11 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/o_ten/trip_app/internal/domain"
-	"github.com/o_ten/trip_app/internal/infrastructure/email"
-	"github.com/o_ten/trip_app/internal/repository"
-	"github.com/o_ten/trip_app/internal/security"
-	"github.com/o_ten/trip_app/internal/validator"
+	"trip_app/internal/domain"
+	"trip_app/internal/infrastructure/email"
+	"trip_app/internal/repository"
+	"trip_app/internal/security"
+	"trip_app/internal/validator"
 	"gorm.io/gorm"
 )
 
