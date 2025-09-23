@@ -35,6 +35,9 @@ func NewUserUsecase(ur repository.UserRepository, uv validator.UserValidator, up
 	return &userUsecase{ur, uv, up, us, ue}
 }
 
+// error definitions
+var ErrEmailConflict = errors.New("email is already registered and active")
+
 func (uu *userUsecase) SignUp(ctx context.Context, name, email string) (*domain.User, error) {
 	// validate input
 	if err := uu.uv.ValidateSignUp(name, email); err != nil {
@@ -48,7 +51,7 @@ func (uu *userUsecase) SignUp(ctx context.Context, name, email string) (*domain.
 	if err == nil {
 		if foundUser.IsActive {
 			// find no error means email already exists
-			return nil, errors.New("email already exists")
+			return nil, ErrEmailConflict
 		}
 		// initPassword & hashPassword
 		rawPassword, hashPassword, err := uu.up.GeneratePassword()
