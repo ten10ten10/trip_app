@@ -9,6 +9,7 @@ import (
 
 type PasswordGenerator interface {
 	GeneratePassword() (string, string, error)
+	ComparePassword(hashedPassword string, rawPassword string) error
 }
 
 type passwordGenerator struct{}
@@ -31,4 +32,8 @@ func (r *passwordGenerator) GeneratePassword() (string, string, error) {
 	hashPassword := string(hash)
 
 	return initialPassword, hashPassword, nil
+}
+
+func (r *passwordGenerator) ComparePassword(hashedPassword string, rawPassword string) error {
+	return bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(rawPassword))
 }
