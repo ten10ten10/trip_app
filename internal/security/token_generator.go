@@ -9,6 +9,7 @@ import (
 
 type TokenGenerator interface {
 	GenerateToken() (rawToken string, hashedToken string, err error)
+	HashToken(rawToken string) string
 }
 
 type tokenGenerator struct{}
@@ -28,4 +29,9 @@ func (s *tokenGenerator) GenerateToken() (string, string, error) {
 	hashedToken := fmt.Sprintf("%x", hash)
 
 	return rawToken, hashedToken, nil
+}
+
+func (s *tokenGenerator) HashToken(rawToken string) string {
+	hash := sha256.Sum256([]byte(rawToken))
+	return fmt.Sprintf("%x", hash)
 }
