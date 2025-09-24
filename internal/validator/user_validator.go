@@ -6,6 +6,7 @@ import (
 
 type UserValidator interface {
 	ValidateSignUp(name, email string) error
+	ValidateLogin(email, password string) error
 }
 
 type userValidator struct {
@@ -25,6 +26,20 @@ func (uv *userValidator) ValidateSignUp(name, email string) error {
 	req := signUpRequest{
 		Name:  name,
 		Email: email,
+	}
+
+	return uv.validate.Struct(req)
+}
+
+func (uv *userValidator) ValidateLogin(email, password string) error {
+	type LoginRequest struct {
+		Email    string `validate:"required,email"`
+		Password string `validate:"required,min=8"`
+	}
+
+	req := LoginRequest{
+		Email:    email,
+		Password: password,
 	}
 
 	return uv.validate.Struct(req)
