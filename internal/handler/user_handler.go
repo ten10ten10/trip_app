@@ -58,12 +58,50 @@ func (h *userHandler) VerifyUser(ctx echo.Context) error {
 	// call usecase to verify email
 	message, err := h.uu.VerifyEmail(ctx.Request().Context(), verificationToken)
 	if err != nil {
-		// handle errors
-		if err.Error() == "invalid verification token" || err.Error() == "verification token has expired" {
+		if errors.Is(err, usecase.ErrInvalidVerificationToken) || errors.Is(err, usecase.ErrVerificationTokenExpired) {
 			return ctx.JSON(http.StatusBadRequest, map[string]string{"message": err.Error()})
 		}
 		return ctx.JSON(http.StatusInternalServerError, map[string]string{"message": "Internal server error"})
 	}
 
 	return ctx.JSON(http.StatusOK, map[string]string{"message": message})
+}
+
+func (h *userHandler) Login(ctx echo.Context) error {
+	var req api.LoginRequest
+
+	// Bind and validate request
+	if err := ctx.Bind(&req); err != nil {
+		return ctx.JSON(http.StatusBadRequest, map[string]string{"message": "Invalid request body"})
+	}
+
+	// send request data to usecase from handler
+	user, token, err := h.uu.Login(ctx.Request().Context(), string(*req.Email), *req.Password)
+	if err != nil {
+		if errors.Is(err, usecase.ErrValidation) {
+			return ctx.JSON(http.StatusBadRequest, map[string]string{"message": err.Error()})
+		}
+		if errors.Is(err, usecase.ErrInvalidCredentials) || errors.Is(err, usecase.ErrUserNotActive) {
+			return ctx.JSON(http.StatusUnauthorized, map[string]string{"message": err.Error()})
+		}
+		return ctx.JSON(http.StatusInternalServerError, map[string]string{"message": "Internal server error"})
+	}
+
+	// prepare response
+	emailDTO := openapi_types.Email(user.Email)
+	userResponse := api.User{
+		Id:        &user.ID,
+		Name:      &user.Name,
+		Email:     &emailDTO,
+		IsActive:  &user.IsActive,
+		CreatedAt: &user.CreatedAt,
+		UpdatedAt: &user.UpdatedAt,
+	}
+
+	res := api.AuthResponse{
+		User:  &userResponse,
+		Token: &token,
+	}
+
+	return ctx.JSON(http.StatusOK, res)
 }
