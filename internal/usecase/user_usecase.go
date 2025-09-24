@@ -5,18 +5,19 @@ import (
 	"errors"
 	"time"
 
-	"github.com/google/uuid"
 	"trip_app/internal/domain"
 	"trip_app/internal/infrastructure/email"
 	"trip_app/internal/repository"
 	"trip_app/internal/security"
 	"trip_app/internal/validator"
+
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
 type UserUsecase interface {
 	SignUp(ctx context.Context, name, email string) (*domain.User, error)
-	VerifyEmail(ctx context.Context, token string) error
+	VerifyEmail(ctx context.Context, token string) (string, error)
 	Login(ctx context.Context, email, password string) (*domain.User, error)
 	Logout(ctx context.Context, userID uuid.UUID) error
 	GetProfile(ctx context.Context, userID uuid.UUID) (*domain.User, error)
@@ -126,4 +127,36 @@ func (uu *userUsecase) SignUp(ctx context.Context, name, email string) (*domain.
 
 	// other errors
 	return nil, err
+}
+
+func (uu *userUsecase) VerifyEmail(ctx context.Context, token string) (string, error) {
+	// hash the token
+	tokenHash := uu.us.HashToken(token)
+
+	// find user by verification token
+	user, err := uu.ur.FindByVerificationToken(ctx, tokenHash)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return "", errors.New("invalid verification token")
+		}
+		return "", err
+	}
+
+	// check if token is expired
+	if user.VerificationTokenExpiresAt == nil || time.Now().After(*user.VerificationTokenExpiresAt) {
+		return "", errors.New("verification token has expired")
+	}
+
+	// activate user
+	user.IsActive = true
+	user.VerificationTokenHash = nil
+	user.VerificationTokenExpiresAt = nil
+
+	if err := uu.ur.Update(ctx, user); err != nil {
+		return "", err
+	}
+
+	message := "Email verified successfully. You can now log in."
+
+	return message, nil
 }
