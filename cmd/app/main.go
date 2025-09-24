@@ -28,11 +28,18 @@ func main() {
 		log.Fatalf("failed to connect database: %v", err)
 	}
 
+	// get jwt secret
+	jwtSecret := os.Getenv("JWT_SECRET")
+	if jwtSecret == "" {
+		log.Fatal("JWT_SECRET is not set")
+	}
+
 	// initialize repositories, usecases, and handlers
 	userRepo := repository.NewUserRepository(db)
 	userValidator := validator.NewUserValidator()
 	passwordGenerator := security.NewPasswordGenerator()
 	tokenGenerator := security.NewTokenGenerator()
+	authTokenGenerator := security.NewAuthTokenGenerator(jwtSecret)
 	emailSender, err := email.NewEmailSender(
 		os.Getenv("SMTP_HOST"),
 		os.Getenv("SMTP_PORT"),
@@ -44,7 +51,7 @@ func main() {
 		log.Fatalf("failed to create email sender: %v", err)
 	}
 
-	userUsecase := usecase.NewUserUsecase(userRepo, userValidator, passwordGenerator, tokenGenerator, emailSender)
+	userUsecase := usecase.NewUserUsecase(userRepo, userValidator, passwordGenerator, tokenGenerator, authTokenGenerator, emailSender)
 	userHandler := handler.NewUserHandler(userUsecase)
 
 	// start Echo server and register handlers
