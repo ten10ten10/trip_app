@@ -3,6 +3,7 @@ package usecase
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	"trip_app/internal/domain"
@@ -18,31 +19,37 @@ import (
 type UserUsecase interface {
 	SignUp(ctx context.Context, name, email string) (*domain.User, error)
 	VerifyEmail(ctx context.Context, token string) (string, error)
-	Login(ctx context.Context, email, password string) (*domain.User, error)
+	Login(ctx context.Context, email, password string) (*domain.User, string, error)
 	Logout(ctx context.Context, userID uuid.UUID) error
 	GetProfile(ctx context.Context, userID uuid.UUID) (*domain.User, error)
 	ChangePassword(ctx context.Context, userID uuid.UUID, currentPassword, newPassword string) error
 }
 
 type userUsecase struct {
-	ur repository.UserRepository
-	uv validator.UserValidator
-	up security.PasswordGenerator
-	us security.TokenGenerator
-	ue email.Sender
+	ur  repository.UserRepository
+	uv  validator.UserValidator
+	up  security.PasswordGenerator
+	us  security.TokenGenerator
+	atg security.AuthTokenGenerator
+	ue  email.Sender
 }
 
-func NewUserUsecase(ur repository.UserRepository, uv validator.UserValidator, up security.PasswordGenerator, us security.TokenGenerator, ue email.Sender) UserUsecase {
-	return &userUsecase{ur, uv, up, us, ue}
+func NewUserUsecase(ur repository.UserRepository, uv validator.UserValidator, up security.PasswordGenerator, us security.TokenGenerator, atg security.AuthTokenGenerator, ue email.Sender) UserUsecase {
+	return &userUsecase{ur, uv, up, us, atg, ue}
 }
 
 // error definitions
 var ErrEmailConflict = errors.New("email is already registered and active")
+var ErrInvalidCredentials = errors.New("invalid email or password")
+var ErrUserNotActive = errors.New("account is not active. please verify your email")
+var ErrValidation = errors.New("input validation failed")
+var ErrInvalidVerificationToken = errors.New("invalid verification token")
+var ErrVerificationTokenExpired = errors.New("verification token has expired")
 
 func (uu *userUsecase) SignUp(ctx context.Context, name, email string) (*domain.User, error) {
 	// validate input
 	if err := uu.uv.ValidateSignUp(name, email); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%w: %w", ErrValidation, err)
 	}
 
 	// check if email already exists
@@ -137,14 +144,14 @@ func (uu *userUsecase) VerifyEmail(ctx context.Context, token string) (string, e
 	user, err := uu.ur.FindByVerificationToken(ctx, tokenHash)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return "", errors.New("invalid verification token")
+			return "", ErrInvalidVerificationToken
 		}
 		return "", err
 	}
 
 	// check if token is expired
 	if user.VerificationTokenExpiresAt == nil || time.Now().After(*user.VerificationTokenExpiresAt) {
-		return "", errors.New("verification token has expired")
+		return "", ErrVerificationTokenExpired
 	}
 
 	// activate user
@@ -159,4 +166,34 @@ func (uu *userUsecase) VerifyEmail(ctx context.Context, token string) (string, e
 	message := "Email verified successfully. You can now log in."
 
 	return message, nil
+}
+
+func (uu *userUsecase) Login(ctx context.Context, email, password string) (*domain.User, string, error) {
+	if err := uu.uv.ValidateLogin(email, password); err != nil {
+		return nil, "", fmt.Errorf("%w: %w", ErrValidation, err)
+	}
+
+	user, err := uu.ur.FindByEmail(ctx, email)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, "", ErrInvalidCredentials
+		}
+		return nil, "", err
+	}
+
+	if !user.IsActive {
+		return nil, "", ErrUserNotActive
+	}
+
+	if err := uu.up.ComparePassword(user.PasswordHash, password); err != nil {
+		return nil, "", ErrInvalidCredentials
+	}
+
+	// generate access token
+	accessToken, err := uu.atg.GenerateAccessToken(user)
+	if err != nil {
+		return nil, "", err
+	}
+
+	return user, accessToken, nil
 }
