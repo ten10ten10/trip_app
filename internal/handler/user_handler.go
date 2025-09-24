@@ -4,9 +4,10 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/labstack/echo"
 	"trip_app/api"
 	"trip_app/internal/usecase"
+
+	"github.com/labstack/echo"
 	openapi_types "github.com/oapi-codegen/runtime/types"
 )
 
@@ -48,4 +49,21 @@ func (h *userHandler) CreateUser(ctx echo.Context) error {
 	}
 
 	return ctx.JSON(http.StatusCreated, res)
+}
+
+func (h *userHandler) VerifyUser(ctx echo.Context) error {
+	// get verificationToken from path parameter
+	verificationToken := ctx.Param("verificationToken")
+
+	// call usecase to verify email
+	message, err := h.uu.VerifyEmail(ctx.Request().Context(), verificationToken)
+	if err != nil {
+		// handle errors
+		if err.Error() == "invalid verification token" || err.Error() == "verification token has expired" {
+			return ctx.JSON(http.StatusBadRequest, map[string]string{"message": err.Error()})
+		}
+		return ctx.JSON(http.StatusInternalServerError, map[string]string{"message": "Internal server error"})
+	}
+
+	return ctx.JSON(http.StatusOK, map[string]string{"message": message})
 }
