@@ -7,6 +7,7 @@ import (
 type UserValidator interface {
 	ValidateSignUp(name, email string) error
 	ValidateLogin(email, password string) error
+	ValidateChangePassword(currentPassword, newPassword string) error
 }
 
 type userValidator struct {
@@ -40,6 +41,20 @@ func (uv *userValidator) ValidateLogin(email, password string) error {
 	req := LoginRequest{
 		Email:    email,
 		Password: password,
+	}
+
+	return uv.validate.Struct(req)
+}
+
+func (uv *userValidator) ValidateChangePassword(currentPassword, newPassword string) error {
+	type ChangePasswordRequest struct {
+		CurrentPassword string `validate:"required,min=8"`
+		NewPassword     string `validate:"required,min=8,nefield=CurrentPassword"`
+	}
+
+	req := ChangePasswordRequest{
+		CurrentPassword: currentPassword,
+		NewPassword:     newPassword,
 	}
 
 	return uv.validate.Struct(req)
