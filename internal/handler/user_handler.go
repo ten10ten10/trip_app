@@ -140,3 +140,32 @@ func (h *userHandler) GetMe(ctx echo.Context) error {
 
 	return ctx.JSON(http.StatusOK, res)
 }
+
+func (h *userHandler) ChangePassword(ctx echo.Context) error {
+	var req api.PasswordChangeRequest
+
+	if err := ctx.Bind(&req); err != nil {
+		return ctx.JSON(http.StatusBadRequest, map[string]string{"message": "Invalid request body"})
+	}
+
+	userID, ok := ctx.Get("user_id").(uuid.UUID)
+	if !ok {
+		return ctx.JSON(http.StatusUnauthorized, map[string]string{"message": "Unauthorized"})
+	}
+
+	err := h.uu.ChangePassword(ctx.Request().Context(), userID, req.CurrentPassword, req.NewPassword)
+	if err != nil {
+		if errors.Is(err, usecase.ErrValidation) {
+			return ctx.JSON(http.StatusBadRequest, map[string]string{"message": err.Error()})
+		}
+		if errors.Is(err, usecase.ErrUserNotFound) {
+			return ctx.JSON(http.StatusNotFound, map[string]string{"message": err.Error()})
+		}
+		if errors.Is(err, usecase.ErrIncorrectCurrentPassword) {
+			return ctx.JSON(http.StatusUnauthorized, map[string]string{"message": err.Error()})
+		}
+		return ctx.JSON(http.StatusInternalServerError, map[string]string{"message": "Internal server error"})
+	}
+
+	return ctx.JSON(http.StatusNoContent, map[string]string{"message": "Password changed successfully"})
+}
