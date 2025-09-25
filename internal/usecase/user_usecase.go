@@ -197,3 +197,9 @@ func (uu *userUsecase) Login(ctx context.Context, email, password string) (*doma
 
 	return user, accessToken, nil
 }
+
+func Logout(ctx context.Context, userID uuid.UUID) error {
+	// currently, client-side just deletes the token, so nothing to do server-side
+	// in the future, we might want to implement token blacklisting or expiration by redis
+	return nil
+}
