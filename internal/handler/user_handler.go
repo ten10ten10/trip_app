@@ -77,7 +77,7 @@ func (h *userHandler) Login(ctx echo.Context) error {
 	}
 
 	// send request data to usecase from handler
-	user, token, err := h.uu.Login(ctx.Request().Context(), string(*req.Email), *req.Password)
+	user, token, err := h.uu.Login(ctx.Request().Context(), string(req.Email), req.Password)
 	if err != nil {
 		if errors.Is(err, usecase.ErrValidation) {
 			return ctx.JSON(http.StatusBadRequest, map[string]string{"message": err.Error()})
