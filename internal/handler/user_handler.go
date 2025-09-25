@@ -105,3 +105,9 @@ func (h *userHandler) Login(ctx echo.Context) error {
 
 	return ctx.JSON(http.StatusOK, res)
 }
+
+func (h *userHandler) Logout(ctx echo.Context) error {
+	// currently, client-side just deletes the token, so nothing to do server-side
+	// in the future, we might want to implement token blacklisting or expiration by redis
+	return nil
+}
