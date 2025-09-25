@@ -45,6 +45,7 @@ var ErrUserNotActive = errors.New("account is not active. please verify your ema
 var ErrValidation = errors.New("input validation failed")
 var ErrInvalidVerificationToken = errors.New("invalid verification token")
 var ErrVerificationTokenExpired = errors.New("verification token has expired")
+var ErrUserNotFound = errors.New("user not found")
 
 func (uu *userUsecase) SignUp(ctx context.Context, name, email string) (*domain.User, error) {
 	// validate input
@@ -202,4 +203,15 @@ func Logout(ctx context.Context, userID uuid.UUID) error {
 	// currently, client-side just deletes the token, so nothing to do server-side
 	// in the future, we might want to implement token blacklisting or expiration by redis
 	return nil
+}
+
+func (uu *userUsecase) GetProfile(ctx context.Context, userID uuid.UUID) (*domain.User, error) {
+	user, err := uu.ur.FindByID(ctx, userID)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, ErrUserNotFound
+		}
+		return nil, err
+	}
+	return user, nil
 }
