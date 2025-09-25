@@ -7,6 +7,7 @@ import (
 	"trip_app/api"
 	"trip_app/internal/usecase"
 
+	"github.com/google/uuid"
 	"github.com/labstack/echo"
 	openapi_types "github.com/oapi-codegen/runtime/types"
 )
@@ -110,4 +111,32 @@ func (h *userHandler) Logout(ctx echo.Context) error {
 	// currently, client-side just deletes the token, so nothing to do server-side
 	// in the future, we might want to implement token blacklisting or expiration by redis
 	return nil
+}
+
+func (h *userHandler) GetMe(ctx echo.Context) error {
+	userID, ok := ctx.Get("user_id").(uuid.UUID)
+	if !ok {
+		return ctx.JSON(http.StatusUnauthorized, map[string]string{"message": "Unauthorized"})
+	}
+
+	user, err := h.uu.GetProfile(ctx.Request().Context(), userID)
+	if err != nil {
+		if errors.Is(err, usecase.ErrUserNotFound) {
+			return ctx.JSON(http.StatusNotFound, map[string]string{"message": err.Error()})
+		}
+		return ctx.JSON(http.StatusInternalServerError, map[string]string{"message": "Internal server error"})
+	}
+
+	// prepare response
+	emailDTO := openapi_types.Email(user.Email)
+	res := api.User{
+		Id:        &user.ID,
+		Name:      &user.Name,
+		Email:     &emailDTO,
+		IsActive:  &user.IsActive,
+		CreatedAt: &user.CreatedAt,
+		UpdatedAt: &user.UpdatedAt,
+	}
+
+	return ctx.JSON(http.StatusOK, res)
 }
