@@ -46,6 +46,7 @@ var ErrValidation = errors.New("input validation failed")
 var ErrInvalidVerificationToken = errors.New("invalid verification token")
 var ErrVerificationTokenExpired = errors.New("verification token has expired")
 var ErrUserNotFound = errors.New("user not found")
+var ErrIncorrectCurrentPassword = errors.New("incorrect current password")
 
 func (uu *userUsecase) SignUp(ctx context.Context, name, email string) (*domain.User, error) {
 	// validate input
@@ -214,4 +215,34 @@ func (uu *userUsecase) GetProfile(ctx context.Context, userID uuid.UUID) (*domai
 		return nil, err
 	}
 	return user, nil
+}
+
+func (uu *userUsecase) ChangePassword(ctx context.Context, userID uuid.UUID, currentPassword, newPassword string) error {
+	if err := uu.uv.ValidateChangePassword(currentPassword, newPassword); err != nil {
+		return fmt.Errorf("%w: %w", ErrValidation, err)
+	}
+
+	user, err := uu.ur.FindByID(ctx, userID)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return ErrUserNotFound
+		}
+		return err
+	}
+
+	if err := uu.up.ComparePassword(user.PasswordHash, currentPassword); err != nil {
+		return ErrIncorrectCurrentPassword
+	}
+
+	newPasswordHash, err := uu.up.HashPassword(newPassword)
+	if err != nil {
+		return err
+	}
+
+	user.PasswordHash = string(newPasswordHash)
+	if err := uu.ur.Update(ctx, user); err != nil {
+		return err
+	}
+
+	return nil
 }
