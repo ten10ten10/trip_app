@@ -333,6 +333,28 @@ paths:
           description: スケジュールの削除に成功
         '404':
           $ref: '#/components/responses/NotFound'
+  
+  /trips/{tripId}/details:
+    get:
+      description: |
+        スケジュール画面の表示に利用します。
+        特定の旅行情報と、それに紐づく全てのスケジュール情報を一括で取得します。
+      operationId: getTripDetails
+      tags:
+        - スケジュール管理 (要認証)
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/TripId'
+      responses:
+        '200':
+          description: 旅行情報とスケジュールの一括取得に成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TripDetailView'
+        '404':
+          $ref: '#/components/responses/NotFound'
 
   /trips/{tripId}/share:
     post:
@@ -509,6 +531,26 @@ paths:
       responses:
         '204':
           description: スケジュールの削除に成功
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /public/trips/{shareToken}/details:
+    get:
+      description: |
+        スケジュール画面の表示に利用します。
+        特定の旅行情報と、それに紐づく全てのスケジュール情報を一括で取得します。
+      operationId: getTripDetails
+      tags:
+        - スケジュール管理 (認証不要)
+      parameters:
+        - $ref: '#/components/parameters/shareToken'
+      responses:
+        '200':
+          description: 旅行情報とスケジュールの一括取得に成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TripDetailView'
         '404':
           $ref: '#/components/responses/NotFound'
 
@@ -703,6 +745,16 @@ components:
         memo:
           type: string
           nullable: true
+    
+    TripDetailView:
+      type: object
+      properties:
+        trip:
+          $ref: '#/components/schemas/Trip'
+        schedules:
+          type: array
+          items:
+            $ref: '#/components/schemas/Schedule'
 
     Member:
       type: object
