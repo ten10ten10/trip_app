@@ -15,6 +15,7 @@ type TripRepository interface {
 	FindByID(ctx context.Context, tripID uuid.UUID) (*domain.Trip, error)
 	FindByShareToken(ctx context.Context, shareToken string) (*domain.Trip, error)
 	Update(ctx context.Context, trip *domain.Trip) error
+	FindWithSchedulesByID(ctx context.Context, tripID uuid.UUID) (*domain.Trip, error)
 	Delete(ctx context.Context, tripID uuid.UUID) error
 }
 
@@ -24,4 +25,59 @@ type tripRepository struct {
 
 func NewTripRepository(db *gorm.DB) TripRepository {
 	return &tripRepository{db}
+}
+
+func (r *tripRepository) Create(ctx context.Context, trip *domain.Trip) error {
+	if err := r.db.WithContext(ctx).Create(trip).Error; err != nil {
+		return err
+	}
+	return nil
+}
+
+func (r *tripRepository) FindByUserID(ctx context.Context, userID uuid.UUID) ([]domain.Trip, error) {
+	var trips []domain.Trip
+	if err := r.db.WithContext(ctx).Preload("Members").Where("userId = ?", userID).Find(&trips).Error; err != nil {
+		return nil, err
+	}
+	return trips, nil
+}
+
+func (r *tripRepository) FindByID(ctx context.Context, tripID uuid.UUID) (*domain.Trip, error) {
+	var trip domain.Trip
+	if err := r.db.WithContext(ctx).Preload("Members").First(&trip, "id = ?", tripID).Error; err != nil {
+		return nil, err
+	}
+	return &trip, nil
+}
+
+func (r *tripRepository) FindByShareToken(ctx context.Context, shareToken string) (*domain.Trip, error) {
+	var trip domain.Trip
+	shareTokenHash := domain.HashShareToken(shareToken)
+	if err := r.db.WithContext(ctx).Preload("Members").Preload("Schedules").Preload("ShareToken").
+		Joins("ShareToken").Where("ShareToken.token_hash = ?", shareTokenHash).First(&trip).Error; err != nil {
+		return nil, err
+	}
+	return &trip, nil
+}
+
+func (r *tripRepository) Update(ctx context.Context, trip *domain.Trip) error {
+	if err := r.db.WithContext(ctx).Save(trip).Error; err != nil {
+		return err
+	}
+	return nil
+}
+
+func (r *tripRepository) FindWithSchedulesByID(ctx context.Context, tripID uuid.UUID) (*domain.Trip, error) {
+	var trip domain.Trip
+	if err := r.db.WithContext(ctx).Preload("Members").Preload("Schedules").First(&trip, "id = ?", tripID).Error; err != nil {
+		return nil, err
+	}
+	return &trip, nil
+}
+
+func (r *tripRepository) Delete(ctx context.Context, tripID uuid.UUID) error {
+	if err := r.db.WithContext(ctx).Delete(&domain.Trip{}, "id = ?", tripID).Error; err != nil {
+		return err
+	}
+	return nil
 }
