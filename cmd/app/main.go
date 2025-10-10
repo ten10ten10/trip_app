@@ -64,6 +64,7 @@ func main() {
 
 	// initialize middlewares
 	tripOwnershipMiddleware := middleware.TripOwnershipMiddleware(tripUsecase)
+	authMiddleware := middleware.AuthMiddleware(jwtSecret)
 
 	// start Echo server
 	e := echo.New()
@@ -85,7 +86,8 @@ func main() {
 	e.DELETE("/public/trips/:shareToken/schedules/:scheduleId", wrapper.DeleteScheduleForPublicTrip)
 
 	// Auth-required routes
-	authRequired := e.Group("", authMiddleware)
+	authRequired := e.Group("")
+	authRequired.Use(authMiddleware)
 	authRequired.POST("/logout", wrapper.LogoutUser)
 	authRequired.GET("/me", wrapper.GetMe)
 	authRequired.PUT("/me/password", wrapper.ChangePassword)

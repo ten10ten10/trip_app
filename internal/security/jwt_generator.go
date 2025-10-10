@@ -8,11 +8,15 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
+type JwtCustomClaims struct {
+	UserID string `json:"user_id"`
+	jwt.RegisteredClaims
+}
+
 type AuthTokenGenerator interface {
 	GenerateAccessToken(user *domain.User) (string, error)
 }
 
-// jwtSecretは.envなどで安全に管理
 type jwtGenerator struct {
 	jwtSecret string
 }
@@ -23,11 +27,12 @@ func NewAuthTokenGenerator(jwtSecret string) AuthTokenGenerator {
 
 func (g *jwtGenerator) GenerateAccessToken(user *domain.User) (string, error) {
 	// jwtに埋め込むデータ(クレーム)を作成
-	// ここではユーザーIDと有効期限を設定
-	claims := jwt.MapClaims{
-		"user_id":    user.ID.String(),
-		"expired_at": time.Now().Add(time.Minute * 30).Unix(),
-		"issued_at":  time.Now().Unix(),
+	claims := &JwtCustomClaims{
+		UserID: user.ID.String(),
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 72)),
+			IssuedAt:  jwt.NewNumericDate(time.Now()),
+		},
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
