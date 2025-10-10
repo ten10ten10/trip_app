@@ -7,13 +7,14 @@ import (
 	"trip_app/api"
 	"trip_app/internal/handler"
 	"trip_app/internal/infrastructure/email"
+	"trip_app/internal/middleware"
 	"trip_app/internal/repository"
 	"trip_app/internal/security"
 	"trip_app/internal/usecase"
 	"trip_app/internal/validator"
 
 	"github.com/joho/godotenv"
-	"github.com/labstack/echo"
+	"github.com/labstack/echo/v4"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
@@ -34,8 +35,11 @@ func main() {
 		log.Fatal("JWT_SECRET is not set")
 	}
 
-	// initialize repositories, usecases, and handlers
+	// initialize repositories
 	userRepo := repository.NewUserRepository(db)
+	tripRepo := repository.NewTripRepository(db)
+
+	// initialize services
 	userValidator := validator.NewUserValidator()
 	passwordGenerator := security.NewPasswordGenerator()
 	tokenGenerator := security.NewTokenGenerator()
@@ -51,13 +55,59 @@ func main() {
 		log.Fatalf("failed to create email sender: %v", err)
 	}
 
+	// initialize usecases
 	userUsecase := usecase.NewUserUsecase(userRepo, userValidator, passwordGenerator, tokenGenerator, authTokenGenerator, emailSender)
-	userHandler := handler.NewUserHandler(userUsecase)
+	tripUsecase := usecase.NewTripUsecase(tripRepo)
 
-	// start Echo server and register handlers
+	// initialize the composite handler
+	h := handler.NewHandler(userUsecase, tripUsecase)
+
+	// initialize middlewares
+	tripOwnershipMiddleware := middleware.TripOwnershipMiddleware(tripUsecase)
+
+	// start Echo server
 	e := echo.New()
-	api.RegisterHandlers(e, userHandler)
 
+	// Create a wrapper for manual route registration
+	wrapper := &api.ServerInterfaceWrapper{Handler: h}
+
+	// Public routes
+	e.POST("/login", wrapper.LoginUser)
+	e.POST("/signup", wrapper.CreateUser)
+	e.POST("/users/verify/:verificationToken", wrapper.VerifyUser)
+	e.GET("/public/trips/:shareToken", wrapper.GetPublicTripByShareToken)
+	e.PUT("/public/trips/:shareToken", wrapper.UpdatePublicTripByShareToken)
+	e.GET("/public/trips/:shareToken/details", wrapper.GetTripDetailsForPublicTrip)
+	e.GET("/public/trips/:shareToken/schedules", wrapper.GetSchedulesForPublicTrip)
+	e.POST("/public/trips/:shareToken/schedules", wrapper.AddScheduleToPublicTrip)
+	e.GET("/public/trips/:shareToken/schedules/:scheduleId", wrapper.GetScheduleForPublicTrip)
+	e.PATCH("/public/trips/:shareToken/schedules/:scheduleId", wrapper.UpdateScheduleForPublicTrip)
+	e.DELETE("/public/trips/:shareToken/schedules/:scheduleId", wrapper.DeleteScheduleForPublicTrip)
+
+	// Auth-required routes
+	authRequired := e.Group("", authMiddleware)
+	authRequired.POST("/logout", wrapper.LogoutUser)
+	authRequired.GET("/me", wrapper.GetMe)
+	authRequired.PUT("/me/password", wrapper.ChangePassword)
+	authRequired.GET("/trips", wrapper.GetUserTrips)
+	authRequired.POST("/trips", wrapper.CreateUserTrip)
+
+	// Trip ownership-required routes
+	tripOwnerGroup := authRequired.Group("/trips/:tripId")
+	tripOwnerGroup.Use(tripOwnershipMiddleware)
+	tripOwnerGroup.GET("", wrapper.GetUserTrip)
+	tripOwnerGroup.PUT("", wrapper.UpdateUserTrip)
+	tripOwnerGroup.DELETE("", wrapper.DeleteUserTrip)
+	tripOwnerGroup.GET("/details", wrapper.GetTripDetails)
+	tripOwnerGroup.GET("/schedules", wrapper.GetSchedulesForTrip)
+	tripOwnerGroup.POST("/schedules", wrapper.AddScheduleToTrip)
+	tripOwnerGroup.GET("/schedules/:scheduleId", wrapper.GetScheduleForTrip)
+	tripOwnerGroup.PATCH("/schedules/:scheduleId", wrapper.UpdateScheduleForTrip)
+	tripOwnerGroup.DELETE("/schedules/:scheduleId", wrapper.DeleteScheduleForTrip)
+	tripOwnerGroup.GET("/share", wrapper.GetShareLinkForTrip)
+	tripOwnerGroup.POST("/share", wrapper.CreateShareLinkForTrip)
+
+	// Start server
 	log.Println("Server starting on port 8080...")
 	if err := e.Start(":8080"); err != nil {
 		log.Fatalf("failed to start server: %v", err)
