@@ -539,7 +539,7 @@ paths:
       description: |
         スケジュール画面の表示に利用します。
         特定の旅行情報と、それに紐づく全てのスケジュール情報を一括で取得します。
-      operationId: getTripDetails
+      operationId: getTripDetailsForPublicTrip
       tags:
         - 旅行情報(認証不要)
       parameters:
