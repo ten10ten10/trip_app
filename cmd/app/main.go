@@ -38,6 +38,7 @@ func main() {
 	// initialize repositories
 	userRepo := repository.NewUserRepository(db)
 	tripRepo := repository.NewTripRepository(db)
+	scheduleRepo := repository.NewScheduleRepository(db)
 
 	// initialize services
 	userValidator := validator.NewUserValidator()
@@ -55,12 +56,17 @@ func main() {
 		log.Fatalf("failed to create email sender: %v", err)
 	}
 
+	// schedule validators
+	scheduleHandlerValidator := handler.NewScheduleHandlerValidator()
+	scheduleUsecaseValidator := usecase.NewScheduleUsecaseValidator()
+
 	// initialize usecases
 	userUsecase := usecase.NewUserUsecase(userRepo, userValidator, passwordGenerator, tokenGenerator, authTokenGenerator, emailSender)
 	tripUsecase := usecase.NewTripUsecase(tripRepo)
+	scheduleUsecase := usecase.NewScheduleUsecase(scheduleRepo, scheduleUsecaseValidator)
 
 	// initialize the composite handler
-	h := handler.NewHandler(userUsecase, tripUsecase)
+	h := handler.NewHandler(userUsecase, tripUsecase, scheduleUsecase, scheduleHandlerValidator)
 
 	// initialize middlewares
 	tripOwnershipMiddleware := middleware.TripOwnershipMiddleware(tripUsecase)
