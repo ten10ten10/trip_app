@@ -8,16 +8,17 @@ import (
 	"trip_app/internal/usecase"
 
 	"github.com/google/uuid"
-	"github.com/labstack/echo"
+	"github.com/labstack/echo/v4"
 	openapi_types "github.com/oapi-codegen/runtime/types"
 )
 
 type userHandler struct {
 	uu usecase.UserUsecase
+	uv UserHandlerValidator
 }
 
-func NewUserHandler(uu usecase.UserUsecase) api.ServerInterface {
-	return &userHandler{uu}
+func NewUserHandler(uu usecase.UserUsecase, uv UserHandlerValidator) *userHandler {
+	return &userHandler{uu, uv}
 }
 
 func (h *userHandler) CreateUser(ctx echo.Context) error {
@@ -25,6 +26,10 @@ func (h *userHandler) CreateUser(ctx echo.Context) error {
 	// Bind and validate request
 	if err := ctx.Bind(&req); err != nil {
 		return ctx.JSON(http.StatusBadRequest, map[string]string{"message": "Invalid request body"})
+	}
+
+	if err := h.uv.ValidateSignUp(*req.Name, string(*req.Email)); err != nil {
+		return ctx.JSON(http.StatusBadRequest, map[string]string{"message": err.Error()})
 	}
 
 	// send request data to usecase from handler
@@ -74,6 +79,10 @@ func (h *userHandler) Login(ctx echo.Context) error {
 	// Bind and validate request
 	if err := ctx.Bind(&req); err != nil {
 		return ctx.JSON(http.StatusBadRequest, map[string]string{"message": "Invalid request body"})
+	}
+
+	if err := h.uv.ValidateLogin(string(req.Email), req.Password); err != nil {
+		return ctx.JSON(http.StatusBadRequest, map[string]string{"message": err.Error()})
 	}
 
 	// send request data to usecase from handler
@@ -146,6 +155,10 @@ func (h *userHandler) ChangePassword(ctx echo.Context) error {
 
 	if err := ctx.Bind(&req); err != nil {
 		return ctx.JSON(http.StatusBadRequest, map[string]string{"message": "Invalid request body"})
+	}
+
+	if err := h.uv.ValidateChangePassword(req.CurrentPassword, req.NewPassword); err != nil {
+		return ctx.JSON(http.StatusBadRequest, map[string]string{"message": err.Error()})
 	}
 
 	userID, ok := ctx.Get("user_id").(uuid.UUID)
