@@ -10,7 +10,6 @@ import (
 	"trip_app/internal/infrastructure/email"
 	"trip_app/internal/repository"
 	"trip_app/internal/security"
-	"trip_app/internal/validator"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -27,14 +26,14 @@ type UserUsecase interface {
 
 type userUsecase struct {
 	ur  repository.UserRepository
-	uv  validator.UserValidator
+	uv  UserUsecaseValidator
 	up  security.PasswordGenerator
 	us  security.TokenGenerator
 	atg security.AuthTokenGenerator
 	ue  email.Sender
 }
 
-func NewUserUsecase(ur repository.UserRepository, uv validator.UserValidator, up security.PasswordGenerator, us security.TokenGenerator, atg security.AuthTokenGenerator, ue email.Sender) UserUsecase {
+func NewUserUsecase(ur repository.UserRepository, uv UserUsecaseValidator, up security.PasswordGenerator, us security.TokenGenerator, atg security.AuthTokenGenerator, ue email.Sender) UserUsecase {
 	return &userUsecase{ur, uv, up, us, atg, ue}
 }
 
@@ -42,17 +41,12 @@ func NewUserUsecase(ur repository.UserRepository, uv validator.UserValidator, up
 var ErrEmailConflict = errors.New("email is already registered and active")
 var ErrInvalidCredentials = errors.New("invalid email or password")
 var ErrUserNotActive = errors.New("account is not active. please verify your email")
-var ErrValidation = errors.New("input validation failed")
 var ErrInvalidVerificationToken = errors.New("invalid verification token")
 var ErrVerificationTokenExpired = errors.New("verification token has expired")
 var ErrUserNotFound = errors.New("user not found")
 var ErrIncorrectCurrentPassword = errors.New("incorrect current password")
 
 func (uu *userUsecase) SignUp(ctx context.Context, name, email string) (*domain.User, error) {
-	// validate input
-	if err := uu.uv.ValidateSignUp(name, email); err != nil {
-		return nil, fmt.Errorf("%w: %w", ErrValidation, err)
-	}
 
 	// check if email already exists
 	foundUser, err := uu.ur.FindByEmail(ctx, email)
@@ -171,9 +165,6 @@ func (uu *userUsecase) VerifyEmail(ctx context.Context, token string) (string, e
 }
 
 func (uu *userUsecase) Login(ctx context.Context, email, password string) (*domain.User, string, error) {
-	if err := uu.uv.ValidateLogin(email, password); err != nil {
-		return nil, "", fmt.Errorf("%w: %w", ErrValidation, err)
-	}
 
 	user, err := uu.ur.FindByEmail(ctx, email)
 	if err != nil {
