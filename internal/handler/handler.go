@@ -16,10 +16,11 @@ func NewHandler(
 	userUsecase usecase.UserUsecase,
 	tripUsecase usecase.TripUsecase,
 	scheduleUsecase usecase.ScheduleUsecase,
+	userHandlerValidator UserHandlerValidator,
 	scheduleHandlerValidator ScheduleHandlerValidator,
 ) api.ServerInterface {
 	return &Handler{
-		userHandler:     NewUserHandler(userUsecase),
+		userHandler:     NewUserHandler(userUsecase, userHandlerValidator),
 		tripHandler:     NewTripHandler(tripUsecase),
 		scheduleHandler: NewScheduleHandler(scheduleUsecase, scheduleHandlerValidator),
 	}
