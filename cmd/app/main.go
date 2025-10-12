@@ -11,7 +11,6 @@ import (
 	"trip_app/internal/repository"
 	"trip_app/internal/security"
 	"trip_app/internal/usecase"
-	"trip_app/internal/validator"
 
 	"github.com/joho/godotenv"
 	"github.com/labstack/echo/v4"
@@ -41,7 +40,6 @@ func main() {
 	scheduleRepo := repository.NewScheduleRepository(db)
 
 	// initialize services
-	userValidator := validator.NewUserValidator()
 	passwordGenerator := security.NewPasswordGenerator()
 	tokenGenerator := security.NewTokenGenerator()
 	authTokenGenerator := security.NewAuthTokenGenerator(jwtSecret)
@@ -56,17 +54,19 @@ func main() {
 		log.Fatalf("failed to create email sender: %v", err)
 	}
 
-	// schedule validators
+	// initialize validators
+	userHandlerValidator := handler.NewUserHandlerValidator()
+	userUsecaseValidator := usecase.NewUserUsecaseValidator()
 	scheduleHandlerValidator := handler.NewScheduleHandlerValidator()
 	scheduleUsecaseValidator := usecase.NewScheduleUsecaseValidator()
 
 	// initialize usecases
-	userUsecase := usecase.NewUserUsecase(userRepo, userValidator, passwordGenerator, tokenGenerator, authTokenGenerator, emailSender)
+	userUsecase := usecase.NewUserUsecase(userRepo, userUsecaseValidator, passwordGenerator, tokenGenerator, authTokenGenerator, emailSender)
 	tripUsecase := usecase.NewTripUsecase(tripRepo)
 	scheduleUsecase := usecase.NewScheduleUsecase(scheduleRepo, scheduleUsecaseValidator)
 
 	// initialize the composite handler
-	h := handler.NewHandler(userUsecase, tripUsecase, scheduleUsecase, scheduleHandlerValidator)
+	h := handler.NewHandler(userUsecase, tripUsecase, scheduleUsecase, userHandlerValidator, scheduleHandlerValidator)
 
 	// initialize middlewares
 	tripOwnershipMiddleware := middleware.TripOwnershipMiddleware(tripUsecase)
