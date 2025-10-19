@@ -36,7 +36,7 @@ func (r *tripRepository) Create(ctx context.Context, trip *domain.Trip) error {
 
 func (r *tripRepository) FindByUserID(ctx context.Context, userID uuid.UUID) ([]domain.Trip, error) {
 	var trips []domain.Trip
-	if err := r.db.WithContext(ctx).Preload("Members").Where("userId = ?", userID).Find(&trips).Error; err != nil {
+	if err := r.db.WithContext(ctx).Preload("Members").Where("user_id = ?", userID).Find(&trips).Error; err != nil {
 		return nil, err
 	}
 	return trips, nil

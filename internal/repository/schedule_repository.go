@@ -33,7 +33,7 @@ func (r *scheduleRepository) Create(ctx context.Context, schedule *domain.Schedu
 
 func (r *scheduleRepository) FindByTripID(ctx context.Context, tripID uuid.UUID) ([]domain.Schedule, error) {
 	var schedules []domain.Schedule
-	if err := r.db.WithContext(ctx).Where("tripId = ?", tripID).Find(&schedules).Error; err != nil {
+	if err := r.db.WithContext(ctx).Where("trip_id = ?", tripID).Find(&schedules).Error; err != nil {
 		return nil, err
 	}
 	return schedules, nil
