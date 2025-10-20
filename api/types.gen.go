@@ -151,6 +151,12 @@ type NotFound = Error
 // Unauthorized defines model for Unauthorized.
 type Unauthorized = Error
 
+// CreateShareLinkForTripParams defines parameters for CreateShareLinkForTrip.
+type CreateShareLinkForTripParams struct {
+	// Regenerate trueの場合、既存トークンを再生成します
+	Regenerate *bool `form:"regenerate,omitempty" json:"regenerate,omitempty"`
+}
+
 // LoginUserJSONRequestBody defines body for LoginUser for application/json ContentType.
 type LoginUserJSONRequestBody = LoginRequest
 

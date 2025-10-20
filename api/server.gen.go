@@ -86,11 +86,8 @@ type ServerInterface interface {
 	// (PATCH /trips/{tripId}/schedules/{scheduleId})
 	UpdateScheduleForTrip(ctx echo.Context, tripId TripId, scheduleId ScheduleId) error
 
-	// (GET /trips/{tripId}/share)
-	GetShareLinkForTrip(ctx echo.Context, tripId TripId) error
-
 	// (POST /trips/{tripId}/share)
-	CreateShareLinkForTrip(ctx echo.Context, tripId TripId) error
+	CreateShareLinkForTrip(ctx echo.Context, tripId TripId, params CreateShareLinkForTripParams) error
 
 	// (POST /users/verify/{verificationToken})
 	VerifyUser(ctx echo.Context, verificationToken string) error
@@ -508,24 +505,6 @@ func (w *ServerInterfaceWrapper) UpdateScheduleForTrip(ctx echo.Context) error {
 	return err
 }
 
-// GetShareLinkForTrip converts echo context to params.
-func (w *ServerInterfaceWrapper) GetShareLinkForTrip(ctx echo.Context) error {
-	var err error
-	// ------------- Path parameter "tripId" -------------
-	var tripId TripId
-
-	err = runtime.BindStyledParameterWithOptions("simple", "tripId", ctx.Param("tripId"), &tripId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
-	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter tripId: %s", err))
-	}
-
-	ctx.Set(BearerAuthScopes, []string{})
-
-	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.GetShareLinkForTrip(ctx, tripId)
-	return err
-}
-
 // CreateShareLinkForTrip converts echo context to params.
 func (w *ServerInterfaceWrapper) CreateShareLinkForTrip(ctx echo.Context) error {
 	var err error
@@ -539,8 +518,17 @@ func (w *ServerInterfaceWrapper) CreateShareLinkForTrip(ctx echo.Context) error 
 
 	ctx.Set(BearerAuthScopes, []string{})
 
+	// Parameter object where we will unmarshal all parameters from the context
+	var params CreateShareLinkForTripParams
+	// ------------- Optional query parameter "regenerate" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "regenerate", ctx.QueryParams(), &params.Regenerate)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter regenerate: %s", err))
+	}
+
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.CreateShareLinkForTrip(ctx, tripId)
+	err = w.Handler.CreateShareLinkForTrip(ctx, tripId, params)
 	return err
 }
 
@@ -612,7 +600,6 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 	router.DELETE(baseURL+"/trips/:tripId/schedules/:scheduleId", wrapper.DeleteScheduleForTrip)
 	router.GET(baseURL+"/trips/:tripId/schedules/:scheduleId", wrapper.GetScheduleForTrip)
 	router.PATCH(baseURL+"/trips/:tripId/schedules/:scheduleId", wrapper.UpdateScheduleForTrip)
-	router.GET(baseURL+"/trips/:tripId/share", wrapper.GetShareLinkForTrip)
 	router.POST(baseURL+"/trips/:tripId/share", wrapper.CreateShareLinkForTrip)
 	router.POST(baseURL+"/users/verify/:verificationToken", wrapper.VerifyUser)
 
