@@ -6,6 +6,7 @@ import (
 	"time"
 	"trip_app/internal/domain"
 	"trip_app/internal/repository"
+	"trip_app/internal/security"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -25,10 +26,11 @@ type TripUsecase interface {
 
 type tripUsecase struct {
 	tr repository.TripRepository
+	us security.TokenGenerator
 }
 
-func NewTripUsecase(tr repository.TripRepository) TripUsecase {
-	return &tripUsecase{tr}
+func NewTripUsecase(tr repository.TripRepository, us security.TokenGenerator) TripUsecase {
+	return &tripUsecase{tr, us}
 }
 
 func (tu *tripUsecase) CreateTrip(ctx context.Context, userID uuid.UUID, title string, startDate, endDate time.Time, members []domain.Member) (*domain.Trip, error) {
@@ -67,7 +69,8 @@ func (tu *tripUsecase) GetTripByTripID(ctx context.Context, tripID uuid.UUID) (*
 }
 
 func (tu *tripUsecase) GetTripByShareToken(ctx context.Context, shareToken string) (*domain.Trip, error) {
-	trip, err := tu.tr.FindByShareToken(ctx, shareToken)
+	shareTokenHash := tu.us.HashToken(shareToken)
+	trip, err := tu.tr.FindByShareToken(ctx, shareTokenHash)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, ErrTripNotFound
