@@ -358,7 +358,9 @@ paths:
 
   /trips/{tripId}/share:
     post:
-      description: 特定の旅行情報に対する共有可能なリンク(トークン)を生成(再生成)します。
+      description: |
+        特定の旅行情報に対する共有可能なリンク(トークン)を生成します。
+        regenerate=trueの場合、既存のトークンを無効化して新しいトークンを生成します。
       operationId: createShareLinkForTrip
       tags:
         - 共有機能 (要認証)
@@ -366,6 +368,13 @@ paths:
         - BearerAuth: []
       parameters:
         - $ref: '#/components/parameters/TripId'
+        - name: regenerate
+          in: query
+          required: false
+          schema:
+            type: boolean
+            default: false
+          description: trueの場合、既存トークンを再生成します
       responses:
         '201':
           description: 共有リンクの生成に成功
@@ -375,24 +384,16 @@ paths:
                 $ref: '#/components/schemas/ShareLinkResponse'
         '404':
           $ref: '#/components/responses/NotFound'
-    get: 
-      description: 特定の旅行情報に対する共有可能なリンク(トークン)を取得します。
-      operationId: getShareLinkForTrip
-      tags:
-        - 共有機能 (要認証)
-      security:
-        - BearerAuth: []
-      parameters:
-        - $ref: '#/components/parameters/TripId'
-      responses:
-        '200':
-          description: 共有リンクの取得に成功
+        '409':
+          description: 共有リンクが既に存在します（regenerate=falseの場合）
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ShareLinkResponse'
-        '404':
-          $ref: '#/components/responses/NotFound'
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Share token already exists"
   
   /public/trips/{shareToken}:
     get:
