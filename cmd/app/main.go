@@ -38,6 +38,7 @@ func main() {
 	userRepo := repository.NewUserRepository(db)
 	tripRepo := repository.NewTripRepository(db)
 	scheduleRepo := repository.NewScheduleRepository(db)
+	shareTokenRepo := repository.NewShareTokenRepository(db)
 
 	// initialize services
 	passwordGenerator := security.NewPasswordGenerator()
@@ -62,11 +63,12 @@ func main() {
 
 	// initialize usecases
 	userUsecase := usecase.NewUserUsecase(userRepo, userUsecaseValidator, passwordGenerator, tokenGenerator, authTokenGenerator, emailSender)
-	tripUsecase := usecase.NewTripUsecase(tripRepo)
+	tripUsecase := usecase.NewTripUsecase(tripRepo, tokenGenerator)
 	scheduleUsecase := usecase.NewScheduleUsecase(scheduleRepo, scheduleUsecaseValidator)
+	shareTokenUsecase := usecase.NewShareTokenUsecase(shareTokenRepo, tokenGenerator)
 
 	// initialize the composite handler
-	h := handler.NewHandler(userUsecase, tripUsecase, scheduleUsecase, userHandlerValidator, scheduleHandlerValidator)
+	h := handler.NewHandler(userUsecase, tripUsecase, scheduleUsecase, shareTokenUsecase, userHandlerValidator, scheduleHandlerValidator)
 
 	// initialize middlewares
 	tripOwnershipMiddleware := middleware.TripOwnershipMiddleware(tripUsecase)
@@ -112,7 +114,6 @@ func main() {
 	tripOwnerGroup.GET("/schedules/:scheduleId", wrapper.GetScheduleForTrip)
 	tripOwnerGroup.PATCH("/schedules/:scheduleId", wrapper.UpdateScheduleForTrip)
 	tripOwnerGroup.DELETE("/schedules/:scheduleId", wrapper.DeleteScheduleForTrip)
-	tripOwnerGroup.GET("/share", wrapper.GetShareLinkForTrip)
 	tripOwnerGroup.POST("/share", wrapper.CreateShareLinkForTrip)
 
 	// Start server
