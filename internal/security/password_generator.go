@@ -39,7 +39,7 @@ func (r *passwordGenerator) ComparePassword(hashedPassword string, rawPassword s
 	return bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(rawPassword))
 }
 
-func HashPassword(rawPassword string) (string, error) {
+func (r *passwordGenerator) HashPassword(rawPassword string) (string, error) {
 	hash, err := bcrypt.GenerateFromPassword([]byte(rawPassword), bcrypt.DefaultCost)
 	if err != nil {
 		return "", err
