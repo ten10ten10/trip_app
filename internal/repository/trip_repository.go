@@ -50,9 +50,8 @@ func (r *tripRepository) FindByID(ctx context.Context, tripID uuid.UUID) (*domai
 	return &trip, nil
 }
 
-func (r *tripRepository) FindByShareToken(ctx context.Context, shareToken string) (*domain.Trip, error) {
+func (r *tripRepository) FindByShareToken(ctx context.Context, shareTokenHash string) (*domain.Trip, error) {
 	var trip domain.Trip
-	shareTokenHash := domain.HashShareToken(shareToken)
 	if err := r.db.WithContext(ctx).Preload("Members").Preload("Schedules").Preload("ShareToken").
 		Joins("ShareToken").Where("ShareToken.token_hash = ?", shareTokenHash).First(&trip).Error; err != nil {
 		return nil, err
