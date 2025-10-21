@@ -18,7 +18,6 @@ type TripUsecase interface {
 	CreateTrip(ctx context.Context, userID uuid.UUID, title string, startDate, endDate time.Time, members []domain.Member) (*domain.Trip, error)
 	GetTripsByUserID(ctx context.Context, userID uuid.UUID) ([]domain.Trip, error)
 	GetTripByTripID(ctx context.Context, tripID uuid.UUID) (*domain.Trip, error)
-	GetTripByShareToken(ctx context.Context, shareToken string) (*domain.Trip, error)
 	UpdateTrip(ctx context.Context, tripID uuid.UUID, title string, startDate, endDate time.Time, members []domain.Member) (*domain.Trip, error)
 	GetTripDetailsByID(ctx context.Context, tripID uuid.UUID) (*domain.Trip, error)
 	DeleteTrip(ctx context.Context, tripID uuid.UUID) error
@@ -59,18 +58,6 @@ func (tu *tripUsecase) GetTripsByUserID(ctx context.Context, userID uuid.UUID) (
 
 func (tu *tripUsecase) GetTripByTripID(ctx context.Context, tripID uuid.UUID) (*domain.Trip, error) {
 	trip, err := tu.tr.FindByID(ctx, tripID)
-	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, ErrTripNotFound
-		}
-		return nil, err
-	}
-	return trip, nil
-}
-
-func (tu *tripUsecase) GetTripByShareToken(ctx context.Context, shareToken string) (*domain.Trip, error) {
-	shareTokenHash := tu.us.HashToken(shareToken)
-	trip, err := tu.tr.FindByShareToken(ctx, shareTokenHash)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, ErrTripNotFound
