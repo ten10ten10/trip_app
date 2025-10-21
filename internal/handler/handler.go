@@ -11,6 +11,7 @@ type Handler struct {
 	*tripHandler
 	*scheduleHandler
 	*shareTokenHandler
+	*publicTripHandler
 }
 
 func NewHandler(
@@ -18,6 +19,7 @@ func NewHandler(
 	tripUsecase usecase.TripUsecase,
 	scheduleUsecase usecase.ScheduleUsecase,
 	shareTokenUsecase usecase.ShareTokenUsecase,
+	publicTripUsecase usecase.PublicTripUsecase,
 	userHandlerValidator UserHandlerValidator,
 	scheduleHandlerValidator ScheduleHandlerValidator,
 ) api.ServerInterface {
@@ -26,5 +28,6 @@ func NewHandler(
 		tripHandler:       NewTripHandler(tripUsecase),
 		scheduleHandler:   NewScheduleHandler(scheduleUsecase, scheduleHandlerValidator),
 		shareTokenHandler: NewShareTokenHandler(shareTokenUsecase),
+		publicTripHandler: NewPublicTripHandler(publicTripUsecase),
 	}
 }
