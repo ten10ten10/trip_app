@@ -10,19 +10,15 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-type ShareTokenHandler interface {
-	CreateShareToken(ctx echo.Context) error
-}
-
 type shareTokenHandler struct {
 	u usecase.ShareTokenUsecase
 }
 
-func NewShareTokenHandler(u usecase.ShareTokenUsecase) ShareTokenHandler {
+func NewShareTokenHandler(u usecase.ShareTokenUsecase) *shareTokenHandler {
 	return &shareTokenHandler{u}
 }
 
-func (h *shareTokenHandler) CreateShareToken(ctx echo.Context) error {
+func (h *shareTokenHandler) CreateShareLinkForTrip(ctx echo.Context, tripId api.TripId) error {
 	trip, ok := ctx.Get("trip").(*domain.Trip)
 	if !ok {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get trip from context")
