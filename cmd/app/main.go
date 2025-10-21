@@ -39,6 +39,7 @@ func main() {
 	tripRepo := repository.NewTripRepository(db)
 	scheduleRepo := repository.NewScheduleRepository(db)
 	shareTokenRepo := repository.NewShareTokenRepository(db)
+	publicTripRepo := repository.NewPublicTripRepository(db)
 
 	// initialize services
 	passwordGenerator := security.NewPasswordGenerator()
@@ -66,13 +67,15 @@ func main() {
 	tripUsecase := usecase.NewTripUsecase(tripRepo, tokenGenerator)
 	scheduleUsecase := usecase.NewScheduleUsecase(scheduleRepo, scheduleUsecaseValidator)
 	shareTokenUsecase := usecase.NewShareTokenUsecase(shareTokenRepo, tokenGenerator)
+	publicTripUsecase := usecase.NewPublicTripUsecase(publicTripRepo, tokenGenerator)
 
 	// initialize the composite handler
-	h := handler.NewHandler(userUsecase, tripUsecase, scheduleUsecase, shareTokenUsecase, userHandlerValidator, scheduleHandlerValidator)
+	h := handler.NewHandler(userUsecase, tripUsecase, scheduleUsecase, shareTokenUsecase, publicTripUsecase, userHandlerValidator, scheduleHandlerValidator)
 
 	// initialize middlewares
 	tripOwnershipMiddleware := middleware.TripOwnershipMiddleware(tripUsecase)
 	authMiddleware := middleware.AuthMiddleware(jwtSecret)
+	shareTokenOwnershipMiddleware := middleware.ShareTokenOwnershipMiddleware(publicTripUsecase)
 
 	// start Echo server
 	e := echo.New()
@@ -80,18 +83,22 @@ func main() {
 	// Create a wrapper for manual route registration
 	wrapper := &api.ServerInterfaceWrapper{Handler: h}
 
-	// Public routes
+	// Public routes (no authentication)
 	e.POST("/login", wrapper.LoginUser)
 	e.POST("/signup", wrapper.CreateUser)
 	e.POST("/users/verify/:verificationToken", wrapper.VerifyUser)
-	e.GET("/public/trips/:shareToken", wrapper.GetPublicTripByShareToken)
-	e.PUT("/public/trips/:shareToken", wrapper.UpdatePublicTripByShareToken)
-	e.GET("/public/trips/:shareToken/details", wrapper.GetTripDetailsForPublicTrip)
-	e.GET("/public/trips/:shareToken/schedules", wrapper.GetSchedulesForPublicTrip)
-	e.POST("/public/trips/:shareToken/schedules", wrapper.AddScheduleToPublicTrip)
-	e.GET("/public/trips/:shareToken/schedules/:scheduleId", wrapper.GetScheduleForPublicTrip)
-	e.PATCH("/public/trips/:shareToken/schedules/:scheduleId", wrapper.UpdateScheduleForPublicTrip)
-	e.DELETE("/public/trips/:shareToken/schedules/:scheduleId", wrapper.DeleteScheduleForPublicTrip)
+
+	// Public trip routes (with share token validation)
+	publicTripGroup := e.Group("/public/trips/:shareToken")
+	publicTripGroup.Use(shareTokenOwnershipMiddleware)
+	publicTripGroup.GET("", wrapper.GetPublicTripByShareToken)
+	publicTripGroup.PUT("", wrapper.UpdatePublicTripByShareToken)
+	publicTripGroup.GET("/details", wrapper.GetTripDetailsForPublicTrip)
+	publicTripGroup.GET("/schedules", wrapper.GetSchedulesForPublicTrip)
+	publicTripGroup.POST("/schedules", wrapper.AddScheduleToPublicTrip)
+	publicTripGroup.GET("/schedules/:scheduleId", wrapper.GetScheduleForPublicTrip)
+	publicTripGroup.PATCH("/schedules/:scheduleId", wrapper.UpdateScheduleForPublicTrip)
+	publicTripGroup.DELETE("/schedules/:scheduleId", wrapper.DeleteScheduleForPublicTrip)
 
 	// Auth-required routes
 	authRequired := e.Group("")

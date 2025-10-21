@@ -13,7 +13,6 @@ type TripRepository interface {
 	Create(ctx context.Context, trip *domain.Trip) error
 	FindByUserID(ctx context.Context, userID uuid.UUID) ([]domain.Trip, error)
 	FindByID(ctx context.Context, tripID uuid.UUID) (*domain.Trip, error)
-	FindByShareToken(ctx context.Context, shareToken string) (*domain.Trip, error)
 	Update(ctx context.Context, trip *domain.Trip) error
 	FindWithSchedulesByID(ctx context.Context, tripID uuid.UUID) (*domain.Trip, error)
 	Delete(ctx context.Context, tripID uuid.UUID) error
@@ -45,15 +44,6 @@ func (r *tripRepository) FindByUserID(ctx context.Context, userID uuid.UUID) ([]
 func (r *tripRepository) FindByID(ctx context.Context, tripID uuid.UUID) (*domain.Trip, error) {
 	var trip domain.Trip
 	if err := r.db.WithContext(ctx).Preload("Members").First(&trip, "id = ?", tripID).Error; err != nil {
-		return nil, err
-	}
-	return &trip, nil
-}
-
-func (r *tripRepository) FindByShareToken(ctx context.Context, shareTokenHash string) (*domain.Trip, error) {
-	var trip domain.Trip
-	if err := r.db.WithContext(ctx).Preload("Members").Preload("Schedules").Preload("ShareToken").
-		Joins("ShareToken").Where("ShareToken.token_hash = ?", shareTokenHash).First(&trip).Error; err != nil {
 		return nil, err
 	}
 	return &trip, nil
