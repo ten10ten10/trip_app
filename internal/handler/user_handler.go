@@ -57,11 +57,7 @@ func (h *userHandler) CreateUser(ctx echo.Context) error {
 	return ctx.JSON(http.StatusCreated, res)
 }
 
-func (h *userHandler) VerifyUser(ctx echo.Context) error {
-	// get verificationToken from path parameter
-	verificationToken := ctx.Param("verificationToken")
-
-	// call usecase to verify email
+func (h *userHandler) VerifyUser(ctx echo.Context, verificationToken string) error {
 	message, err := h.uu.VerifyEmail(ctx.Request().Context(), verificationToken)
 	if err != nil {
 		if errors.Is(err, usecase.ErrInvalidVerificationToken) || errors.Is(err, usecase.ErrVerificationTokenExpired) {
@@ -73,7 +69,7 @@ func (h *userHandler) VerifyUser(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, map[string]string{"message": message})
 }
 
-func (h *userHandler) Login(ctx echo.Context) error {
+func (h *userHandler) LoginUser(ctx echo.Context) error {
 	var req api.LoginRequest
 
 	// Bind and validate request
@@ -116,7 +112,7 @@ func (h *userHandler) Login(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, res)
 }
 
-func (h *userHandler) Logout(ctx echo.Context) error {
+func (h *userHandler) LogoutUser(ctx echo.Context) error {
 	// currently, client-side just deletes the token, so nothing to do server-side
 	// in the future, we might want to implement token blacklisting or expiration by redis
 	return nil
