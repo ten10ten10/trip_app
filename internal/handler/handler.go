@@ -12,6 +12,7 @@ type Handler struct {
 	*scheduleHandler
 	*shareTokenHandler
 	*publicTripHandler
+	*publicScheduleHandler
 }
 
 func NewHandler(
@@ -24,10 +25,11 @@ func NewHandler(
 	scheduleHandlerValidator ScheduleHandlerValidator,
 ) api.ServerInterface {
 	return &Handler{
-		userHandler:       NewUserHandler(userUsecase, userHandlerValidator),
-		tripHandler:       NewTripHandler(tripUsecase),
-		scheduleHandler:   NewScheduleHandler(scheduleUsecase, scheduleHandlerValidator),
-		shareTokenHandler: NewShareTokenHandler(shareTokenUsecase),
-		publicTripHandler: NewPublicTripHandler(publicTripUsecase),
+		userHandler:          NewUserHandler(userUsecase, userHandlerValidator),
+		tripHandler:          NewTripHandler(tripUsecase),
+		scheduleHandler:      NewScheduleHandler(scheduleUsecase, scheduleHandlerValidator),
+		shareTokenHandler:    NewShareTokenHandler(shareTokenUsecase),
+		publicTripHandler:    NewPublicTripHandler(publicTripUsecase),
+		publicScheduleHandler: NewPublicScheduleHandler(scheduleUsecase, scheduleHandlerValidator),
 	}
 }
