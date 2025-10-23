@@ -18,14 +18,16 @@ func NewShareTokenHandler(u usecase.ShareTokenUsecase) *shareTokenHandler {
 	return &shareTokenHandler{u}
 }
 
-func (h *shareTokenHandler) CreateShareLinkForTrip(ctx echo.Context, tripId api.TripId) error {
+func (h *shareTokenHandler) CreateShareLinkForTrip(ctx echo.Context, tripId api.TripId, params api.CreateShareLinkForTripParams) error {
 	trip, ok := ctx.Get("trip").(*domain.Trip)
 	if !ok {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get trip from context")
 	}
 
-	regenerateStr := ctx.QueryParam("regenerate")
-	regenerate := regenerateStr == "true"
+	regenerate := false
+	if params.Regenerate != nil {
+		regenerate = *params.Regenerate
+	}
 
 	shareToken, token, err := h.u.CreateShareToken(ctx.Request().Context(), trip.ID, regenerate)
 	if err != nil {
