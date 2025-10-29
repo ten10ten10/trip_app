@@ -201,7 +201,7 @@ EMAIL_FROM=your-email@gmail.com
 go mod download
 
 # データベース起動（Docker）
-docker-compose up -d
+docker compose up -d
 
 # アプリケーション起動
 go run cmd/app/main.go
